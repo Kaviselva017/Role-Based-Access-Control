@@ -4,4 +4,9 @@ sqlalchemy
 passlib[bcrypt]
 python-jose[cryptography]
 chromadb
+
+# ✅ FORCE COMPATIBILITY
+sentence-transformers==2.2.2
+huggingface-hub==0.14.1
+
 python-multipart
