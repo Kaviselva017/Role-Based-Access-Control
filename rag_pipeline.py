@@ -58,25 +58,25 @@ def generate_response(query: str, user_role: str) -> dict:
             "response_time_ms": elapsed()
         }
 
-    # ── 1. SMALL TALK ─────────────────────────────────────
+    # 1. SMALL TALK
     small_talk = {
-        "hi":            "Hello! How can I assist you today?",
-        "hello":         "Hi there! Ask me about company reports or policies.",
-        "hey":           "Hello! Ask me about your company documents.",
-        "who are you":   "I am Dragon Intel, a secure RBAC assistant for internal company documents.",
+        "hi": "Hello! How can I assist you today?",
+        "hello": "Hi there! Ask me about company reports or policies.",
+        "hey": "Hello! Ask me about your company documents.",
+        "who are you": "I am Dragon Intel, a secure RBAC assistant for internal company documents.",
         "what can you do": f"As a {user_role}, I can answer questions about your permitted company documents.",
-        "help":          "Try asking about revenue, HR policies, leave days, or your department reports.",
+        "help": "Try asking about revenue, HR policies, leave days, or your department reports.",
     }
     if clean_query in small_talk:
         return resp(small_talk[clean_query])
 
-    # ── 2. ROLE IDENTITY ──────────────────────────────────
+    # 2. ROLE IDENTITY
     role_triggers = ["my role", "what is my role", "say my role",
                      "who am i", "what role", "tell me my role"]
     if any(t in clean_query for t in role_triggers):
         return resp(f"Your current role is **{user_role}**.")
 
-    # ── 3. OFF-TOPIC GUARD ────────────────────────────────
+    # 3. OFF-TOPIC GUARD
     company_keywords = [
         "revenue", "profit", "cost", "expense", "loss", "budget", "forecast",
         "leave", "policy", "remote", "salary", "hire", "hiring", "headcount",
@@ -105,7 +105,7 @@ def generate_response(query: str, user_role: str) -> dict:
             "Please ask something relevant to your role."
         )
 
-    # ── 4. VAGUE QUERY GUARD ──────────────────────────────
+    # 4. VAGUE QUERY GUARD
     vague_exact = [
         "do you know", "can you", "are you", "do you", "tell me", "what do you",
         "okay", "ok", "yes", "no", "maybe", "sure", "please", "thanks",
@@ -117,7 +117,7 @@ def generate_response(query: str, user_role: str) -> dict:
             "'What is the Q2 revenue?' or 'What is the HR leave policy?'"
         )
 
-    # ── 5. RBAC SEARCH ────────────────────────────────────
+    # 5. RBAC SEARCH
     docs = secure_semantic_search(query=query, user_role=user_role, top_k=3)
     doc_count = len(docs)
     confidence = round(
@@ -133,7 +133,7 @@ def generate_response(query: str, user_role: str) -> dict:
 
     context = build_context(docs)
 
-    # ── 6. DIRECT EXTRACTION ──────────────────────────────
+    # 6. DIRECT EXTRACTION
     if "revenue" in clean_query:
         m = re.search(r"[₹\$][\d,]+", context)
         if m:
@@ -157,12 +157,7 @@ def generate_response(query: str, user_role: str) -> dict:
     if "remote" in clean_query or "work from home" in clean_query:
         return resp("Employees may work remotely up to 2 days per week as per company policy.", sources, confidence, doc_count)
 
-    if "engineer" in clean_query and any(w in clean_query for w in ["how many", "count", "number", "total"]):
-        m = re.search(r"\d+\s*engineer", context, re.IGNORECASE)
-        if m:
-            return resp(f"There are {m.group()} in the engineering department.", sources, confidence, doc_count)
-
-    # ── 7. LLM FALLBACK ───────────────────────────────────
+    # 7. LLM FALLBACK
     load_model()
 
     messages = [
@@ -171,8 +166,7 @@ def generate_response(query: str, user_role: str) -> dict:
             "Answer ONLY using the context provided. "
             "Be concise. Answer in 1-3 sentences only. "
             "Do NOT repeat the context or source tags. "
-            "If the question is off-topic (jokes, weather, poems, etc.), "
-            "reply: I can only answer company-related questions."
+            "If the question is off-topic reply: I can only answer company-related questions."
         )},
         {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}\nAnswer:"}
     ]

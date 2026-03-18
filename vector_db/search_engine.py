@@ -1,20 +1,22 @@
 import os
 import chromadb
-from sentence_transformers import SentenceTransformer
+from chromadb.utils import embedding_functions
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROMA_PATH = os.path.join(PROJECT_ROOT, "chroma_storage")
 
-_model = None
 _client = None
 _collection = None
+_ef = None
 
 
-def load_embedding_model():
-    global _model
-    if _model is None:
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
-    return _model
+def get_ef():
+    global _ef
+    if _ef is None:
+        _ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
+    return _ef
 
 
 def get_collection():
@@ -23,6 +25,7 @@ def get_collection():
         _client = chromadb.PersistentClient(path=CHROMA_PATH)
         _collection = _client.get_or_create_collection(
             name="company_documents",
+            embedding_function=get_ef(),
             metadata={"hnsw:space": "cosine"}
         )
     return _collection
@@ -39,16 +42,13 @@ def is_authorized(user_role: str, allowed_roles_raw) -> bool:
 
 
 def secure_semantic_search(query: str, user_role: str, top_k: int = 3) -> list:
-    model = load_embedding_model()
     collection = get_collection()
 
     if collection.count() == 0:
         return []
 
-    query_embedding = model.encode(query, normalize_embeddings=True).tolist()
-
     results = collection.query(
-        query_embeddings=[query_embedding],
+        query_texts=[query],
         n_results=min(top_k * 3, collection.count()),
         include=["documents", "metadatas", "distances"]
     )
