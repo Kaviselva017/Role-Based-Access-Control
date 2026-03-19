@@ -1,6 +1,6 @@
 import os
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHROMA_PATH = os.path.join(PROJECT_ROOT, "chroma_storage")
@@ -13,9 +13,7 @@ _ef = None
 def get_ef():
     global _ef
     if _ef is None:
-        _ef = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name="all-MiniLM-L6-v2"
-        )
+        _ef = SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
     return _ef
 
 
@@ -43,7 +41,6 @@ def is_authorized(user_role: str, allowed_roles_raw) -> bool:
 
 def secure_semantic_search(query: str, user_role: str, top_k: int = 3) -> list:
     collection = get_collection()
-
     if collection.count() == 0:
         return []
 

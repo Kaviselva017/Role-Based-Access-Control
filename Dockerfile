@@ -2,10 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+RUN apt-get update && apt-get install -y gcc g++ && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "chromadb[embedding-functions]"
 
 COPY . .
+
+RUN python -m backend.init_users && \
+    python -m preprocessing.preprocess_all && \
+    python -m vector_db.embedding_engine
 
 CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
