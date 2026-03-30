@@ -1,0 +1,101 @@
+import React, { createContext, useState, useEffect } from 'react';
+
+export const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+      // Verify token is still valid
+      validateToken();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const validateToken = async () => {
+    try {
+      const response = await fetch('/api/health', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        logout();
+      }
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+    }
+  };
+
+  const login = async (username, password) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await response.json();
+      setToken(data.token);
+      setUser(data.user);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
+
+  const hasPermission = (permission) => {
+    if (!user) return false;
+    
+    const rolePermissions = {
+      'admin': ['view_dashboard', 'upload_docs', 'manage_users', 'generate_keys', 'chat', 'view_history'],
+      'c-level': ['view_dashboard', 'chat', 'view_history'],
+      'finance': ['chat', 'view_history'],
+      'hr': ['chat', 'view_history'],
+      'marketing': ['chat', 'view_history'],
+      'engineering': ['chat', 'view_history'],
+      'employee': ['chat', 'view_history']
+    };
+
+    const userPermissions = rolePermissions[user.role] || [];
+    return userPermissions.includes(permission);
+  };
+
+  return (
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      error, 
+      login, 
+      logout, 
+      hasPermission,
+      isAdmin: user?.role === 'admin',
+      isAuthenticated: !!user
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

@@ -1,0 +1,213 @@
+/* Layout Container */
+.layout-container {
+  display: flex;
+  height: 100vh;
+  background: #0a0e27;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 230px;
+  background: #0f1219;
+  border-right: 1px solid #1a1f3a;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  position: relative;
+  margin-bottom: 40px;
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #1a1f3a;
+}
+
+.dragon-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.sidebar-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #00d4ff;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.sidebar-header p {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 1px;
+  margin: 5px 0 0 0;
+  text-transform: uppercase;
+}
+
+/* User Info */
+.user-info {
+  margin-bottom: 30px;
+  background: #161b2e;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #1a1f3a;
+}
+
+.username {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e0e0e0;
+  margin: 0 0 8px 0;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.role-badge.role-admin {
+  background: #ff6b6b;
+  color: white;
+  border: 1px solid #ff8787;
+}
+
+.role-badge.role-c-level {
+  background: #ffa500;
+  color: white;
+  border: 1px solid #ffb84d;
+}
+
+.role-badge.role-finance {
+  background: #00d4ff;
+  color: #0a0e27;
+  border: 1px solid #00e0ff;
+}
+
+.role-badge.role-hr {
+  background: #90ee90;
+  color: #0a0e27;
+  border: 1px solid #a8f5a8;
+}
+
+.role-badge.role-marketing {
+  background: #ff69b4;
+  color: white;
+  border: 1px solid #ff85c6;
+}
+
+.role-badge.role-engineering {
+  background: #6495ed;
+  color: white;
+  border: 1px solid #7ba5ff;
+}
+
+.role-badge.role-employee {
+  background: #888;
+  color: white;
+  border: 1px solid #999;
+}
+
+/* Navigation */
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  color: #a0a0a0;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover {
+  background: #161b2e;
+  color: #00d4ff;
+  border-left-color: #00d4ff;
+}
+
+.nav-item.active {
+  background: #161b2e;
+  color: #00d4ff;
+  border-left-color: #00d4ff;
+}
+
+.nav-icon {
+  font-size: 18px;
+  min-width: 24px;
+}
+
+/* Logout Button */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  width: 100%;
+  background: #1a0f0f;
+  border: 1px solid #3a1515;
+  color: #ff6b6b;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: #2a1515;
+  border-color: #ff8787;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #0a0e27;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #1a1f3a;
+  }
+
+  .layout-container {
+    flex-direction: column;
+  }
+
+  .navigation {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 10px;
+  }
+
+  .nav-item {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+}
