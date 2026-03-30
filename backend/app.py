@@ -68,6 +68,58 @@ def permission_required(permission):
     return decorator
 
 
+def get_role_based_response(query, user_role):
+    """Generate role-appropriate response based on user role"""
+    role_responses = {
+        'admin': {
+            'greeting': 'Welcome, Administrator. You have full access to all system functions.',
+            'access_level': 'Full system access - All data available',
+            'denied_keywords': []
+        },
+        'c-level': {
+            'greeting': 'Welcome, Executive. You have access to strategic and financial data.',
+            'access_level': 'Executive level - Financial & Strategic data',
+            'denied_keywords': ['employee salary', 'individual performance']
+        },
+        'finance': {
+            'greeting': 'Welcome, Finance Team. You have access to financial and budget data.',
+            'access_level': 'Finance level - Financial data and budgets only',
+            'denied_keywords': ['employee records', 'hr data', 'strategic plans']
+        },
+        'hr': {
+            'greeting': 'Welcome, HR Team. You have access to personnel and policy data.',
+            'access_level': 'HR level - HR and policy data only',
+            'denied_keywords': ['financial data', 'revenue', 'budget', 'company secrets']
+        },
+        'employee': {
+            'greeting': 'Welcome. You have access to general information and personal data.',
+            'access_level': 'Standard user - Limited to your own data',
+            'denied_keywords': ['salary', 'other employees', 'financial', 'budget', 'strategic']
+        }
+    }
+    
+    role_config = role_responses.get(user_role, role_responses['employee'])
+    
+    # Check if query contains denied keywords for this role
+    query_lower = query.lower()
+    for keyword in role_config['denied_keywords']:
+        if keyword.lower() in query_lower:
+            return {
+                'response': f"Access Denied: This information is not available for your role ({user_role.upper()}). {role_config['access_level']}",
+                'confidence': 0.0,
+                'access_denied': True,
+                'role_info': role_config
+            }
+    
+    return {
+        'response': f"{role_config['greeting']} Query: {query}",
+        'confidence': 0.85,
+        'access_denied': False,
+        'role_info': role_config
+    }
+
+
+
 # ==================== AUTHENTICATION ====================
 
 @app.route('/api/health', methods=['GET'])
@@ -386,16 +438,17 @@ def delete_document(current_user, doc_id):
 @token_required
 @permission_required('chat')
 def chat(current_user):
-    """Send chat query"""
+    """Send chat query with role-based response filtering"""
     data = request.get_json()
     query = data.get('query', '')
     
     if not query:
         return jsonify({'message': 'Query cannot be empty'}), 400
     
-    # TODO: Integrate with RAG system
-    # For now, return a placeholder response
-    response = f"Response to query from {current_user['role']}: {query}"
+    # Generate role-based response
+    response_data = get_role_based_response(query, current_user['role'])
+    response = response_data['response']
+    access_denied = response_data['access_denied']
     referenced_docs = []
     
     # Log chat
@@ -406,17 +459,20 @@ def chat(current_user):
         referenced_docs=referenced_docs
     )
     
-    # Log metrics
+    # Log metrics (track access denials)
     QueryMetrics.log_query(
         user_id=str(current_user['_id']),
         query=query,
-        role=current_user['role']
+        role=current_user['role'],
+        access_denied=access_denied
     )
     
     return jsonify({
         'chat_id': chat_id,
         'query': query,
         'response': response,
+        'access_denied': access_denied,
+        'role_info': response_data.get('role_info', {}),
         'referenced_docs': referenced_docs
     }), 200
 

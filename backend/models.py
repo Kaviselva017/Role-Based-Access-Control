@@ -293,7 +293,7 @@ class QueryMetrics:
     """Query metrics for analytics"""
     
     @staticmethod
-    def log_query(user_id, query, response_time=0, role=''):
+    def log_query(user_id, query, response_time=0, role='', access_denied=False):
         """Log a query for analytics"""
         query_log = {
             '_id': ObjectId(),
@@ -301,6 +301,7 @@ class QueryMetrics:
             'query': query,
             'response_time': response_time,
             'role': role,
+            'access_denied': access_denied,
             'timestamp': datetime.utcnow()
         }
         result = queries_collection.insert_one(query_log)
@@ -311,7 +312,7 @@ class QueryMetrics:
         """Get stats for admin dashboard"""
         total_queries = queries_collection.count_documents({})
         total_users = users_collection.count_documents({})
-        access_denied = queries_collection.count_documents({'response_time': {'$lt': 0}})
+        access_denied = queries_collection.count_documents({'access_denied': True})
         
         # Queries by role (last 7 days)
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
