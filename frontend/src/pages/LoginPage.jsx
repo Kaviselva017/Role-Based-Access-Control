@@ -56,7 +56,7 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/apikey', {
+      const response = await fetch('/api/auth/apikey', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: accessKey })
@@ -68,7 +68,8 @@ const LoginPage = () => {
         localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/chat');
       } else {
-        setError('Invalid access key');
+        const errorData = await response.json();
+        setError(errorData.message || 'Invalid access key');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -183,27 +184,27 @@ const LoginPage = () => {
           <div className="login-footer">
             <p className="footer-text">DRAGON INTEL v2.0 | AUTHORIZED PERSONNEL ONLY</p>
             <div className="demo-section">
-              <p className="demo-title">DEMO CREDENTIALS:</p>
+              <p className="demo-title">ACCESS KEYS FOR TESTING:</p>
               <div className="demo-grid">
                 <div className="demo-item">
                   <strong>Admin:</strong>
-                  <code>admin / admin123</code>
+                  <code>ADM-2030</code>
                 </div>
                 <div className="demo-item">
                   <strong>C-Level:</strong>
-                  <code>clevel_user / pass123</code>
+                  <code>CLV-2030</code>
                 </div>
                 <div className="demo-item">
                   <strong>Finance:</strong>
-                  <code>finance_user / pass123</code>
+                  <code>FIN-2030</code>
                 </div>
                 <div className="demo-item">
                   <strong>HR:</strong>
-                  <code>hr_user / pass123</code>
+                  <code>HR-2030</code>
                 </div>
                 <div className="demo-item">
                   <strong>Employee:</strong>
-                  <code>employee_user / pass123</code>
+                  <code>EMP-2030</code>
                 </div>
               </div>
             </div>

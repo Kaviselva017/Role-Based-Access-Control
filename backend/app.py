@@ -70,6 +70,12 @@ def permission_required(permission):
 
 # ==================== AUTHENTICATION ====================
 
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({'status': 'ok', 'message': 'Backend is running'}), 200
+
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     """Register a new user (admin only)"""
@@ -109,6 +115,51 @@ def login():
     
     if user['password'] != password_hash:
         return jsonify({'message': 'Invalid credentials'}), 401
+    
+    # Update last login
+    User.update_user(str(user['_id']), last_login=datetime.utcnow())
+    
+    # Generate JWT token
+    token = jwt.encode({
+        'user_id': str(user['_id']),
+        'username': user['username'],
+        'role': user['role'],
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION)
+    }, app.config['SECRET_KEY'], algorithm='HS256')
+    
+    return jsonify({
+        'message': 'Login successful',
+        'token': token,
+        'user': {
+            'id': str(user['_id']),
+            'username': user['username'],
+            'email': user['email'],
+            'role': user['role'],
+            'department': user['department']
+        }
+    }), 200
+
+
+@app.route('/api/auth/apikey', methods=['POST'])
+def login_with_apikey():
+    """Login using access key"""
+    data = request.get_json()
+    key = data.get('key')
+    
+    if not key:
+        return jsonify({'message': 'Access key is required'}), 400
+    
+    # Verify the access key
+    access_key_doc = AccessKey.verify_key(key)
+    
+    if not access_key_doc:
+        return jsonify({'message': 'Invalid or expired access key'}), 401
+    
+    # Get the user associated with this key
+    user = User.get_user_by_id(str(access_key_doc['user_id']))
+    
+    if not user or not user.get('is_active'):
+        return jsonify({'message': 'User not found or inactive'}), 401
     
     # Update last login
     User.update_user(str(user['_id']), last_login=datetime.utcnow())
