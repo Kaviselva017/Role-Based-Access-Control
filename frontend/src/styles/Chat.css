@@ -189,21 +189,22 @@
 /* Chat Input */
 .chat-input-form {
   display: flex;
-  gap: 10px;
-  padding: 20px;
+  gap: 12px;
+  padding: 24px;
   border-top: 1px solid #1a1f3a;
   background: #0f1219;
 }
 
 .chat-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: 14px 18px;
   background: #161b2e;
   border: 1px solid #1a1f3a;
   border-radius: 6px;
   color: #e0e0e0;
   font-size: 14px;
   transition: all 0.3s ease;
+  min-height: 50px;
 }
 
 .chat-input:focus {
@@ -222,20 +223,22 @@
 }
 
 .send-btn {
-  padding: 12px 20px;
+  padding: 16px 28px;
   background: #00d4ff;
   color: #0a0e27;
   border: none;
   border-radius: 6px;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1.2px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-transform: uppercase;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-height: 50px;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.25);
 }
 
 .send-btn:hover:not(:disabled) {

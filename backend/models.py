@@ -5,7 +5,8 @@ import secrets
 import hashlib
 
 # MongoDB Connection
-client = MongoClient('mongodb://localhost:27017/')
+MONGODB_URL = 'mongodb+srv://720823108017_db_user:jpdz9AT0m65hKBOB@cluster0.2gbezeu.mongodb.net/?appName=Cluster0'
+client = MongoClient(MONGODB_URL)
 db = client['company_chatbot_rbac']
 
 # Collections

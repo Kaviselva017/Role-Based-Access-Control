@@ -79,11 +79,18 @@ const LoginPage = () => {
   };
 
   const handleSubmit = (e) => {
-    if (authMethod === 'password') {
-      handlePasswordLogin(e);
-    } else {
-      handleAccessKeyLogin(e);
-    }
+    handleAccessKeyLogin(e);
+  };
+
+  const getSampleAccessKey = () => {
+    const roleMap = {
+      'admin': 'ADM-2030',
+      'c-level': 'CLV-2030',
+      'finance': 'FIN-2030',
+      'hr': 'HR-2030',
+      'employee': 'EMP-2030'
+    };
+    return roleMap[role] || 'EMP-2030';
   };
 
   return (
@@ -103,38 +110,6 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Username */}
-            <div className="form-group">
-              <label htmlFor="username">// USERNAME</label>
-              <div className="input-wrapper">
-                <input
-                  id="username"
-                  type="text"
-                  placeholder="enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  disabled={loading || authMethod === 'apikey'}
-                  required={authMethod === 'password'}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="form-group">
-              <label htmlFor="password">// PASSWORD</label>
-              <div className="input-wrapper">
-                <input
-                  id="password"
-                  type="password"
-                  placeholder="enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading || authMethod === 'apikey'}
-                  required={authMethod === 'password'}
-                />
-              </div>
-            </div>
-
             {/* Role Selector */}
             <div className="form-group">
               <label htmlFor="role">// ROLE</label>
@@ -155,12 +130,14 @@ const LoginPage = () => {
 
             {/* Access Key */}
             <div className="form-group">
-              <label htmlFor="accessKey">// ACCESS KEY</label>
+              <label htmlFor="accessKey">
+                // ACCESS KEY <span className="sample-key">[ {getSampleAccessKey()} ]</span>
+              </label>
               <div className="input-wrapper">
                 <input
                   id="accessKey"
-                  type="password"
-                  placeholder="enter access key (optional)"
+                  type="text"
+                  placeholder="paste access key here"
                   value={accessKey}
                   onChange={(e) => setAccessKey(e.target.value)}
                   disabled={loading}
