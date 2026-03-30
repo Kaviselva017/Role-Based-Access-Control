@@ -130,10 +130,21 @@
   border: 1px solid #1a3a4a;
 }
 
-.message.bot .message-content.error,
+.message.bot.access-denied .message-content {
+  background: rgba(255, 107, 107, 0.1);
+  border: 2px solid #ff6b6b;
+  border-left: 4px solid #ff6b6b;
+}
+
+.message.bot.error .message-content,
 .message .message-content.isError {
   background: #3a1a1a;
   border-color: #8a3a3a;
+}
+
+.message.bot.access-denied .message-label {
+  color: #ff6b6b;
+  font-weight: 600;
 }
 
 .message-label {
@@ -184,6 +195,21 @@
   margin: 4px 4px 4px 0;
   font-size: 11px;
   border: 1px solid #00a8d8;
+}
+
+/* Role Info Box */
+.role-info-box {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 107, 107, 0.05);
+  border: 1px dashed #ff6b6b;
+  border-radius: 4px;
+  color: #ff8080;
+  font-size: 11px;
+}
+
+.role-info-box small {
+  display: block;
 }
 
 /* Chat Input */

@@ -67,8 +67,10 @@ const Chat = () => {
         const botMessage = {
           role: 'bot',
           content: data.response,
-          timestamp: data.related_documents ? new Date().toISOString() : new Date().toISOString(),
-          docs: data.referenced_docs
+          timestamp: new Date().toISOString(),
+          docs: data.referenced_docs,
+          access_denied: data.access_denied,
+          role_info: data.role_info
         };
         setMessages((prev) => [...prev, botMessage]);
       } else {
@@ -119,7 +121,7 @@ const Chat = () => {
           </div>
         ) : (
           messages.map((msg, idx) => (
-            <div key={idx} className={`message ${msg.role}`}>
+            <div key={idx} className={`message ${msg.role} ${msg.access_denied ? 'access-denied' : ''} ${msg.isError ? 'error' : ''}`}>
               <div className="message-content">
                 {msg.role === 'user' ? (
                   <>
@@ -130,9 +132,15 @@ const Chat = () => {
                   <>
                     <div className="message-label">
                       Dragon Intel - {formatTime(msg.timestamp)}
-                      {msg.isError && ' (Error)'}
+                      {msg.access_denied && ' (⊘ ACCESS DENIED)'}
+                      {msg.isError && ' (⚠ Error)'}
                     </div>
                     <p>{msg.content}</p>
+                    {msg.role_info && msg.access_denied && (
+                      <div className="role-info-box">
+                        <small>📍 Access Level: {msg.role_info.access_level}</small>
+                      </div>
+                    )}
                     {msg.docs && msg.docs.length > 0 && (
                       <div className="referenced-docs">
                         <strong>📎 Referenced:</strong>
