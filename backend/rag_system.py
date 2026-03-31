@@ -136,7 +136,7 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
     # Process the most relevant document
     best_doc = retrieved_docs[0]
     
-    if best_doc['similarity'] < 0.2:  # Strict accuracy check
+    if best_doc['similarity'] < 0.1:  # Strict accuracy check
         return {
             'response': "No relevant information found.",
             'source': 'None',
@@ -144,13 +144,11 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
             'referenced_docs': []
         }
 
-    # Extract and clean chunk (max 4 lines as requested)
-    clean_chunk = best_doc['content'].replace('\n\n', '\n').strip()
-    lines = clean_chunk.split('\n')
-    short_answer = '\n'.join([f"- {line.strip()}" for line in lines[:4] if line.strip()])
+    # Ensure we deliver the exact matched text directly from the dataset.
+    clean_chunk = best_doc['content'].strip()
     
     # Follow exact output format requested
-    response = f"- Answer:\n{short_answer}\n"
+    response = f"- Answer:\n{clean_chunk}\n\n"
     response += f"- Source: {best_doc['filename']}"
 
     return {

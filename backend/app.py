@@ -450,18 +450,39 @@ def chat(current_user):
     if not query:
         return jsonify({'message': 'Query cannot be empty'}), 400
     
+    # First check role-based restrictions to instantly deny unauthorized queries
+    role_response = get_role_based_response(query, current_user['role'])
+    if role_response.get('access_denied'):
+        # Log metrics (track access denials)
+        QueryMetrics.log_query(
+            user_id=str(current_user['_id']),
+            query=query,
+            role=current_user['role'],
+            access_denied=True
+        )
+        return jsonify({
+            'chat_id': None,
+            'query': query,
+            'response': role_response['response'],
+            'access_denied': True,
+            'role_info': role_response.get('role_info', {}),
+            'referenced_docs': [],
+            'source': 'Role-based'
+        }), 200
+
     # Try to search for relevant documents first (RAG)
     user_department = current_user.get('department', '')
-    retrieved_docs = search_relevant_documents(query, department=user_department, limit=3)
+    search_dept = None if current_user['role'] in ['admin', 'c-level'] else user_department
+    retrieved_docs = search_relevant_documents(query, department=search_dept, limit=3)
     
     # Generate response based on documents or role-based fallback
-    if retrieved_docs and any(doc['similarity'] > 0.3 for doc in retrieved_docs):
+    if retrieved_docs and any(doc['similarity'] > 0.1 for doc in retrieved_docs):
         # Use RAG for document-based answer
-        rag_result = generate_rag_response(query, current_user['role'], user_department, retrieved_docs)
+        rag_result = generate_rag_response(query, current_user['role'], search_dept, retrieved_docs)
         response = rag_result['response']
         referenced_docs = rag_result['referenced_docs']
         access_denied = False
-        role_info = None
+        role_info = role_response.get('role_info', {})
     else:
         # Fall back to role-based response
         role_response = get_role_based_response(query, current_user['role'])
