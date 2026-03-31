@@ -1,9 +1,7 @@
-# Dragon Intelligence Platform - Start Script
+﻿# Dragon Intelligence Platform - Start Script
 # Start both backend and frontend servers
 
-Write-Host "╔════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║  Dragon Intelligence Platform - RBAC                       ║" -ForegroundColor Cyan
-Write-Host "╚════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host "Dragon Intelligence Platform - RBAC" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if MongoDB is running
@@ -17,14 +15,14 @@ if (-not $mongoTest) {
 
 # Start Backend
 Write-Host "[1/2] Starting Backend (Flask) on http://localhost:5000" -ForegroundColor Green
-Write-Host "    → Press Ctrl+C to stop" -ForegroundColor DarkGray
+Write-Host "    Press Ctrl+C to stop" -ForegroundColor DarkGray
 $backendProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd $PSScriptRoot\backend; python app.py" -PassThru
 Start-Sleep -Seconds 2
 
 # Start Frontend
 Write-Host ""
 Write-Host "[2/2] Starting Frontend (React) on http://localhost:3000" -ForegroundColor Green
-Write-Host "    → Press Ctrl+C to stop" -ForegroundColor DarkGray
+Write-Host "    Press Ctrl+C to stop" -ForegroundColor DarkGray
 Write-Host ""
 
 cd "$PSScriptRoot\frontend"

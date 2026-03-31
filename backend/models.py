@@ -5,7 +5,7 @@ import secrets
 import hashlib
 
 # MongoDB Connection
-MONGODB_URL = 'mongodb+srv://720823108017_db_user:jpdz9AT0m65hKBOB@cluster0.2gbezeu.mongodb.net/?appName=Cluster0'
+MONGODB_URL = 'mongodb://localhost:27017'
 client = MongoClient(MONGODB_URL)
 db = client['company_chatbot_rbac']
 
@@ -172,10 +172,14 @@ class AccessKey:
     
     @staticmethod
     def verify_key(key):
-        """Verify an access key"""
+        """Verify an access key by hash, plain_key, or name"""
         key_hash = hashlib.sha256(key.encode()).hexdigest()
         access_key = access_keys_collection.find_one_and_update(
-            {'key': key_hash, 'is_active': True, 'expires_at': {'$gt': datetime.utcnow()}},
+            {
+                '$or': [{'key': key_hash}, {'name': key}, {'plain_key': key}],
+                'is_active': True, 
+                'expires_at': {'$gt': datetime.utcnow()}
+            },
             {'$set': {'last_used': datetime.utcnow()}},
             return_document=True
         )
@@ -240,8 +244,21 @@ class Document:
     
     @staticmethod
     def get_documents_by_department(department):
-        """Get documents specific to a department"""
-        return list(documents_collection.find({'department': department}))
+        """Get documents specific to a department AND the General department (case-insensitive)"""
+        if not department:
+            return list(documents_collection.find())
+            
+        import re
+        escaped_dept = re.escape(str(department))
+        escaped_general = re.escape('General')
+        
+        # Find docs matching either their specific department OR 'General'
+        return list(documents_collection.find({
+            '$or': [
+                {'department': {'$regex': f"^{escaped_dept}$", '$options': 'i'}},
+                {'department': {'$regex': f"^{escaped_general}$", '$options': 'i'}}
+            ]
+        }))
     
     @staticmethod
     def mark_indexed(doc_id, embedding_id):

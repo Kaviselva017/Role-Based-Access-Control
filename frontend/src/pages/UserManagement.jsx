@@ -10,6 +10,7 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingUserId, setEditingUserId] = useState(null);
+  const [editFormData, setEditFormData] = useState({});
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -132,6 +133,44 @@ const UserManagement = () => {
     }
   };
 
+  const handleEditClick = (user) => {
+    setEditingUserId(user.id);
+    setEditFormData({
+      username: user.username,
+      email: user.email,
+      department: user.department || '',
+      role: user.role
+    });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
+
+  const handleSaveEdit = async (userId) => {
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      if (response.ok) {
+        setEditingUserId(null);
+        loadUsers();
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to update user');
+      }
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if (loading) {
     return <div className="loading">Loading users...</div>;
   }
@@ -233,44 +272,90 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td className="username-cell">{user.username}</td>
-                <td>{user.email}</td>
-                <td>
-                  <select
-                    value={user.role}
-                    onChange={(e) =>
-                      handleUpdateUserRole(user.id, e.target.value)
-                    }
-                    className="role-select"
-                  >
-                    {roles.map((role) => (
-                      <option key={role.key} value={role.key}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>{user.department || '-'}</td>
-                <td className="date-cell">
-                  {user.last_login
-                    ? new Date(user.last_login).toLocaleDateString()
-                    : 'Never'}
-                </td>
-                <td className="date-cell">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
-                <td>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteUser(user.id)}
-                  >
-                    DELETE
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {users.map((user) => {
+              const isEditing = editingUserId === user.id;
+              return (
+                <tr key={user.id} className={isEditing ? 'editing-row' : ''}>
+                  <td className="username-cell">
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        name="username" 
+                        value={editFormData.username} 
+                        onChange={handleEditChange} 
+                        className="edit-input"
+                      />
+                    ) : (
+                      user.username
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input 
+                        type="email" 
+                        name="email" 
+                        value={editFormData.email} 
+                        onChange={handleEditChange} 
+                        className="edit-input"
+                      />
+                    ) : (
+                      user.email
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <select name="role" value={editFormData.role} onChange={handleEditChange} className="edit-select">
+                        {roles.map(r => <option key={r.key} value={r.key}>{r.name}</option>)}
+                      </select>
+                    ) : (
+                      <select
+                        value={user.role}
+                        onChange={(e) => handleUpdateUserRole(user.id, e.target.value)}
+                        className="role-select"
+                      >
+                        {roles.map((role) => (
+                          <option key={role.key} value={role.key}>
+                            {role.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+                  <td>
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        name="department" 
+                        value={editFormData.department} 
+                        onChange={handleEditChange} 
+                        className="edit-input"
+                      />
+                    ) : (
+                      user.department || '-'
+                    )}
+                  </td>
+                  <td className="date-cell">
+                    {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  </td>
+                  <td className="date-cell">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="actions-cell">
+                    {isEditing ? (
+                      <>
+                        <button className="save-btn" onClick={() => handleSaveEdit(user.id)}>SAVE</button>
+                        <button className="cancel-btn" onClick={() => setEditingUserId(null)}>CANCEL</button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="edit-btn" onClick={() => handleEditClick(user)}>EDIT</button>
+                        <button className="delete-btn" onClick={() => handleDeleteUser(user.id)}>DELETE</button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

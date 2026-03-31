@@ -73,6 +73,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const setAuthState = (newToken, newUser) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const hasPermission = (permission) => {
     if (!user) return false;
     
@@ -97,7 +104,8 @@ export const AuthProvider = ({ children }) => {
       loading, 
       error, 
       login, 
-      logout, 
+      logout,
+      setAuthState,
       hasPermission,
       isAdmin: user?.role === 'admin',
       isAuthenticated: !!user

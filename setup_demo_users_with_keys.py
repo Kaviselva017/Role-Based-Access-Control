@@ -46,12 +46,36 @@ demo_users = [
         'access_key': 'HR-2030'
     },
     {
+        'username': 'marketing_user',
+        'email': 'marketing@test.com',
+        'password': 'pass123',
+        'role': 'marketing',
+        'department': 'Marketing',
+        'access_key': 'MKT-2030'
+    },
+    {
+        'username': 'engineering_user',
+        'email': 'engineering@test.com',
+        'password': 'pass123',
+        'role': 'engineering',
+        'department': 'Engineering',
+        'access_key': 'ENG-2030'
+    },
+    {
         'username': 'employee_user',
         'email': 'emp@test.com',
         'password': 'pass123',
         'role': 'employee',
         'department': 'General',
         'access_key': 'EMP-2030'
+    },
+    {
+        'username': 'MARAN',
+        'email': 'maran@gmail.com',
+        'password': 'maran123',
+        'role': 'employee',
+        'department': 'General',
+        'access_key': 'MAR-2030'
     }
 ]
 
