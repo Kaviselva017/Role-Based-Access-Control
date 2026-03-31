@@ -335,13 +335,13 @@ def get_role_based_response(query, user_role):
     
     # Check for restricted access
     restricted_keywords = {
-        'admin': ['config', 'user', 'system', 'security', 'audit'],
-        'c-level': ['employee', 'operational', 'system config', 'security'],
-        'finance': ['employee', 'hr', 'operations', 'admin', 'executive', 'marketing', 'engineering'],
-        'hr': ['finance', 'confidential', 'security', 'strategic', 'marketing', 'engineering'],
-        'employee': ['finance', 'hr', 'strategic', 'confidential', 'admin', 'marketing', 'engineering', 'cost', 'revenue'],
-        'marketing': ['finance', 'hr', 'system', 'strategic', 'admin', 'engineering'],
-        'engineering': ['finance', 'hr', 'business', 'admin', 'marketing']
+        'admin': [],
+        'c-level': [],
+        'finance': ['employee', 'hr', 'operations', 'admin', 'executive', 'marketing', 'engineering', 'payroll'],
+        'hr': ['finance', 'financial', 'budget', 'security', 'strategic', 'marketing', 'engineering', 'revenue'],
+        'employee': ['finance', 'financial', 'hr', 'strategic', 'confidential', 'admin', 'marketing', 'engineering', 'cost', 'revenue', 'budget'],
+        'marketing': ['finance', 'financial', 'hr', 'system', 'strategic', 'admin', 'engineering', 'budget', 'revenue'],
+        'engineering': ['finance', 'financial', 'hr', 'business', 'admin', 'marketing', 'revenue', 'budget', 'sales']
     }
     
     # Also strictly block cross-departmental queries missing from the allowed list
