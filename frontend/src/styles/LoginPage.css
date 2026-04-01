@@ -238,6 +238,27 @@
   text-transform: uppercase;
   text-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
   line-height: 1.1;
+  position: relative;
+  animation: cyberGlitch 4s infinite;
+}
+
+@keyframes cyberGlitch {
+  0%, 92%, 96%, 100% { 
+    text-shadow: 0 0 30px rgba(0, 255, 255, 0.4); 
+    transform: translate(0, 0) skew(0deg); 
+  }
+  93% { 
+    text-shadow: -3px 0 var(--cyber-red), 3px 0 var(--cyber-green); 
+    transform: translate(-2px, 1px) skew(2deg); 
+  }
+  94% { 
+    text-shadow: 3px 0 var(--cyber-cyan), -3px 0 var(--cyber-red); 
+    transform: translate(2px, -1px) skew(-2deg); 
+  }
+  95% { 
+    text-shadow: -1px 0 var(--cyber-green), 1px 0 var(--cyber-cyan); 
+    transform: translate(-1px, 2px) skew(1deg); 
+  }
 }
 
 .auth-subtitle {
@@ -358,7 +379,8 @@ form {
 
 .input-wrapper input {
   width: 100%;
-  padding: 14px 16px 14px 42px;
+  box-sizing: border-box;
+  padding: 14px 16px 14px 46px;
   background: rgba(5, 10, 25, 0.9);
   border: 1px solid rgba(0, 255, 255, 0.12);
   border-radius: 4px;
@@ -473,15 +495,22 @@ form {
 
 .btn-bolt {
   font-size: 16px;
-  animation: boltFlicker 2s infinite;
+  color: #fdec00;
+  display: inline-block;
+  animation: lightningStrike 2.5s infinite;
 }
 
-@keyframes boltFlicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-  70% { opacity: 1; }
-  75% { opacity: 0.3; }
-  80% { opacity: 1; }
+@keyframes lightningStrike {
+  0%, 88%, 94%, 98%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px #fdec00) drop-shadow(0 0 10px rgba(253, 236, 0, 0.8));
+    transform: scale(1.1) rotate(5deg);
+  }
+  90%, 96% {
+    opacity: 0;
+    filter: none;
+    transform: scale(0.9) rotate(-5deg);
+  }
 }
 
 .btn-spinner {

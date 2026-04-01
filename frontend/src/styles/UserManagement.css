@@ -19,7 +19,7 @@
   margin-bottom: 20px;
 }
 
-.user-mgmt-header {
+.management-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,8 +31,11 @@
   gap: 10px;
 }
 
-.user-add-btn,
-.user-action-btn {
+.add-user-btn,
+.edit-btn,
+.save-btn,
+.cancel-btn,
+.delete-btn {
   padding: 10px 20px;
   background: rgba(0, 255, 255, 0.06);
   border: 1px solid rgba(0, 255, 255, 0.2);
@@ -47,21 +50,24 @@
   transition: all 0.3s ease;
 }
 
-.user-add-btn:hover,
-.user-action-btn:hover {
+.add-user-btn:hover,
+.edit-btn:hover,
+.save-btn:hover,
+.cancel-btn:hover,
+.delete-btn:hover {
   background: rgba(0, 255, 255, 0.12);
   border-color: rgba(0, 255, 255, 0.4);
   box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
   transform: translateY(-1px);
 }
 
-.user-delete-btn {
+.delete-btn {
   border-color: rgba(255, 51, 102, 0.2) !important;
   color: var(--cyber-red) !important;
   background: rgba(255, 51, 102, 0.06) !important;
 }
 
-.user-delete-btn:hover {
+.delete-btn:hover {
   background: rgba(255, 51, 102, 0.12) !important;
   border-color: rgba(255, 51, 102, 0.4) !important;
   box-shadow: 0 0 15px rgba(255, 51, 102, 0.15) !important;
@@ -144,7 +150,7 @@
 }
 
 /* Table */
-.user-table {
+.users-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
@@ -154,7 +160,7 @@
   overflow: hidden;
 }
 
-.user-table thead th {
+.users-table thead th {
   padding: 14px 16px;
   text-align: left;
   font-family: var(--font-mono);
@@ -167,7 +173,7 @@
   background: rgba(0, 255, 255, 0.02);
 }
 
-.user-table tbody td {
+.users-table tbody td {
   padding: 12px 16px;
   border-bottom: 1px solid rgba(0, 255, 255, 0.03);
   color: var(--cyber-text-dim);
@@ -175,12 +181,18 @@
   font-weight: 500;
 }
 
-.user-table tbody tr {
+.users-table tbody tr {
   transition: all 0.2s ease;
 }
 
-.user-table tbody tr:hover {
+.users-table tbody tr:hover {
   background: rgba(0, 255, 255, 0.02);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 /* Success / Error alerts */
