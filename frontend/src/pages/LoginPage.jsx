@@ -129,7 +129,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="login-container">
+    <div className="login-container updated-hmr-trigger">
       {/* Animated Background */}
       <div className="login-background">
         <div className="grid-bg"></div>
