@@ -68,7 +68,7 @@
 }
 
 /* User form / modal */
-.user-form {
+.add-user-form {
   background: rgba(5, 10, 24, 0.95);
   border: 1px solid rgba(0, 255, 255, 0.1);
   border-radius: 6px;
@@ -76,7 +76,16 @@
   margin-bottom: 24px;
 }
 
-.user-form label {
+.add-user-form h2 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--cyber-cyan);
+  margin-bottom: 20px;
+}
+
+.add-user-form label {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--cyber-text-dim);
@@ -86,8 +95,8 @@
   margin-bottom: 6px;
 }
 
-.user-form input,
-.user-form select {
+.add-user-form input,
+.add-user-form select {
   width: 100%;
   padding: 12px 16px;
   background: rgba(5, 10, 24, 0.9);
@@ -100,15 +109,38 @@
   transition: all 0.3s ease;
 }
 
-.user-form input:focus,
-.user-form select:focus {
+.add-user-form input:focus,
+.add-user-form select:focus {
   outline: none;
   border-color: rgba(0, 255, 255, 0.35);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
-.user-form input::placeholder {
+.add-user-form input::placeholder {
   color: var(--cyber-text-muted);
+}
+
+.form-submit-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 200, 255, 0.18));
+  color: var(--cyber-cyan);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.form-submit-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 200, 255, 0.3));
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Table */
