@@ -1,354 +1,177 @@
-/* User Management Container */
-.user-management-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background: #0a0e27;
+/* ═══════════════════════════════════════════════════════
+   USER MANAGEMENT — CYBERPUNK TERMINAL THEME
+   ═══════════════════════════════════════════════════════ */
+
+.user-mgmt-container {
+  padding: 24px;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
-.management-header {
+.user-mgmt-container h1 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--cyber-cyan);
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  margin-bottom: 20px;
+}
+
+.user-mgmt-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  background: #0f1219;
-  border-radius: 8px;
-  border: 1px solid #1a1f3a;
+  margin-bottom: 20px;
 }
 
-.management-header h1 {
-  font-size: 18px;
+.user-mgmt-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.user-add-btn,
+.user-action-btn {
+  padding: 10px 20px;
+  background: rgba(0, 255, 255, 0.06);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  color: var(--cyber-cyan);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 2px;
-  color: #00d4ff;
-  margin: 0;
   text-transform: uppercase;
-}
-
-.add-user-btn {
-  padding: 10px 20px;
-  background: #00d4ff;
-  color: #0a0e27;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.add-user-btn:hover {
-  background: #00e0ff;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-}
-
-/* Error Message */
-.error-message {
-  padding: 12px 16px;
-  background: #3a1a1a;
-  border: 1px solid #8a3a3a;
-  border-radius: 6px;
-  color: #ff6b6b;
-  font-size: 13px;
-}
-
-/* Add User Form */
-.add-user-form {
-  padding: 20px;
-  background: #0f1219;
-  border: 1px solid #1a1f3a;
-  border-radius: 8px;
-  animation: slideDown 0.3s ease;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.add-user-form h2 {
-  font-size: 14px;
-  color: #00d4ff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0 0 20px 0;
-  border-bottom: 2px solid #00d4ff;
-  padding-bottom: 12px;
-}
-
-.add-user-form form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 12px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: 600;
-}
-
-.form-group input,
-.form-group select {
-  padding: 10px 12px;
-  background: #161b2e;
-  border: 1px solid #1a1f3a;
-  border-radius: 4px;
-  color: #e0e0e0;
-  font-size: 13px;
   transition: all 0.3s ease;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #00d4ff;
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+.user-add-btn:hover,
+.user-action-btn:hover {
+  background: rgba(0, 255, 255, 0.12);
+  border-color: rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
-.form-group input::placeholder {
-  color: #666;
+.user-delete-btn {
+  border-color: rgba(255, 51, 102, 0.2) !important;
+  color: var(--cyber-red) !important;
+  background: rgba(255, 51, 102, 0.06) !important;
 }
 
-.form-submit-btn {
-  grid-column: 1 / -1;
-  padding: 12px 20px;
-  background: #00d4ff;
-  color: #0a0e27;
-  border: none;
+.user-delete-btn:hover {
+  background: rgba(255, 51, 102, 0.12) !important;
+  border-color: rgba(255, 51, 102, 0.4) !important;
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.15) !important;
+}
+
+/* User form / modal */
+.user-form {
+  background: rgba(5, 10, 24, 0.95);
+  border: 1px solid rgba(0, 255, 255, 0.1);
   border-radius: 6px;
-  font-weight: 600;
-  font-size: 12px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.user-form label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--cyber-text-dim);
+  letter-spacing: 2px;
   text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
 }
 
-.form-submit-btn:hover {
-  background: #00e0ff;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
-}
-
-/* Users Table */
-.users-table {
-  overflow-x: auto;
-  background: #0f1219;
-  border: 1px solid #1a1f3a;
-  border-radius: 8px;
-}
-
-.users-table table {
+.user-form input,
+.user-form select {
   width: 100%;
-  border-collapse: collapse;
+  padding: 12px 16px;
+  background: rgba(5, 10, 24, 0.9);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--cyber-text);
+  font-family: var(--font-mono);
   font-size: 13px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
 }
 
-.users-table thead {
-  background: #161b2e;
-  border-bottom: 2px solid #1a1f3a;
+.user-form input:focus,
+.user-form select:focus {
+  outline: none;
+  border-color: rgba(0, 255, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
-.users-table th {
+.user-form input::placeholder {
+  color: var(--cyber-text-muted);
+}
+
+/* Table */
+.user-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: rgba(5, 10, 24, 0.85);
+  border: 1px solid rgba(0, 255, 255, 0.06);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.user-table thead th {
   padding: 14px 16px;
   text-align: left;
-  color: #00d4ff;
+  font-family: var(--font-mono);
+  font-size: 9px;
   font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--cyber-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 11px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.06);
+  background: rgba(0, 255, 255, 0.02);
 }
 
-.users-table tbody tr {
-  border-bottom: 1px solid #1a1f3a;
-  transition: all 0.3s ease;
-}
-
-.users-table tbody tr:hover {
-  background: #161b2e;
-}
-
-.users-table td {
-  padding: 14px 16px;
-  color: #e0e0e0;
-}
-
-.username-cell {
-  font-weight: 500;
-  color: #00d4ff;
-}
-
-.date-cell {
-  font-size: 12px;
-  color: #888;
-}
-
-/* Role Select */
-.role-select {
-  padding: 6px 8px;
-  background: #0a0e27;
-  border: 1px solid #00a8d8;
-  border-radius: 3px;
-  color: #00d4ff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.role-select:focus {
-  outline: none;
-  border-color: #00d4ff;
-  box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
-}
-
-.role-select option {
-  background: #0f1219;
-  color: #e0e0e0;
-}
-
-/* Action Buttons */
-.actions-cell {
-  display: flex;
-  gap: 8px;
-}
-
-.edit-btn {
-  padding: 6px 12px;
-  background: rgba(0, 212, 255, 0.1);
-  color: #00d4ff;
-  border: 1px solid rgba(0, 212, 255, 0.4);
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.edit-btn:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: #00d4ff;
-}
-
-.save-btn {
-  padding: 6px 12px;
-  background: rgba(74, 222, 128, 0.1);
-  color: #4ade80;
-  border: 1px solid rgba(74, 222, 128, 0.4);
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.save-btn:hover {
-  background: rgba(74, 222, 128, 0.2);
-  border-color: #4ade80;
-}
-
-.cancel-btn {
-  padding: 6px 12px;
-  background: rgba(255, 107, 107, 0.1);
-  color: #ff6b6b;
-  border: 1px solid rgba(255, 107, 107, 0.4);
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.cancel-btn:hover {
-  background: rgba(255, 107, 107, 0.2);
-  border-color: #ff6b6b;
-}
-
-.delete-btn {
-  padding: 6px 12px;
-  background: #3a1a1a;
-  color: #ff6b6b;
-  border: 1px solid #8a3a3a;
-  border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-}
-
-.delete-btn:hover {
-  background: #4a2a2a;
-  border-color: #ff8787;
-}
-
-/* Inline Edit Controls */
-.edit-input, .edit-select {
-  width: 100%;
-  padding: 6px 8px;
-  background: #0a0e27;
-  border: 1px solid #00d4ff;
-  border-radius: 3px;
-  color: #e0e0e0;
+.user-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.03);
+  color: var(--cyber-text-dim);
   font-size: 13px;
+  font-weight: 500;
 }
 
-.edit-input:focus, .edit-select:focus {
-  outline: none;
-  box-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+.user-table tbody tr {
+  transition: all 0.2s ease;
 }
 
-.editing-row {
-  background: rgba(0, 212, 255, 0.05) !important;
+.user-table tbody tr:hover {
+  background: rgba(0, 255, 255, 0.02);
 }
 
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 400px;
-  font-size: 16px;
-  color: #888;
+/* Success / Error alerts */
+.user-success {
+  padding: 12px 16px;
+  background: rgba(0, 255, 136, 0.06);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-left: 3px solid var(--cyber-green);
+  border-radius: 4px;
+  color: var(--cyber-green);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-bottom: 16px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .add-user-form form {
-    grid-template-columns: 1fr;
-  }
-
-  .users-table {
-    font-size: 12px;
-  }
-
-  .users-table th,
-  .users-table td {
-    padding: 10px 12px;
-  }
+.user-error {
+  padding: 12px 16px;
+  background: rgba(255, 51, 102, 0.06);
+  border: 1px solid rgba(255, 51, 102, 0.2);
+  border-left: 3px solid var(--cyber-red);
+  border-radius: 4px;
+  color: var(--cyber-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  margin-bottom: 16px;
 }

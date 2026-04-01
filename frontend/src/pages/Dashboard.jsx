@@ -3,21 +3,21 @@ import { AuthContext } from '../context/AuthContext';
 import '../styles/Dashboard.css';
 
 const ROLE_COLORS = {
-  'admin': '#ff6b6b',
-  'c-level': '#ffa500',
-  'finance': '#00d4ff',
-  'hr': '#4ade80',
+  'admin': '#ff3366',
+  'c-level': '#ff8800',
+  'finance': '#00ffff',
+  'hr': '#00ff88',
   'marketing': '#ff69b4',
   'engineering': '#6495ed',
-  'employee': '#a78bfa',
-  'unknown': '#888',
+  'employee': '#a855f7',
+  'unknown': '#5a7a8a',
 };
 
 const SEVERITY_CONFIG = {
-  high: { icon: '🔴', color: '#ff4757', bg: 'rgba(255,71,87,0.08)', border: '#ff4757' },
-  medium: { icon: '🟠', color: '#ffa502', bg: 'rgba(255,165,2,0.08)', border: '#ffa502' },
-  warning: { icon: '🟡', color: '#ffd32a', bg: 'rgba(255,211,42,0.08)', border: '#ffd32a' },
-  info: { icon: '🔵', color: '#00d4ff', bg: 'rgba(0,212,255,0.08)', border: '#00d4ff' },
+  high: { icon: '🔴', color: '#ff3366', bg: 'rgba(255,51,102,0.06)', border: '#ff3366' },
+  medium: { icon: '🟠', color: '#ff8800', bg: 'rgba(255,136,0,0.06)', border: '#ff8800' },
+  warning: { icon: '🟡', color: '#ffcc00', bg: 'rgba(255,204,0,0.06)', border: '#ffcc00' },
+  info: { icon: '🔵', color: '#00ffff', bg: 'rgba(0,255,255,0.06)', border: '#00ffff' },
 };
 
 const formatDate = (iso) => {
@@ -321,8 +321,8 @@ const Dashboard = () => {
                 <svg viewBox={`0 0 ${chartW} ${chartH}`} className="activity-svg" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#00d4ff" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#00d4ff" stopOpacity="0.02" />
+                      <stop offset="0%" stopColor="#00ffff" stopOpacity="0.25" />
+                      <stop offset="100%" stopColor="#00ffff" stopOpacity="0.02" />
                     </linearGradient>
                     <filter id="glow">
                       <feGaussianBlur stdDeviation="3" result="blur" />
@@ -335,21 +335,21 @@ const Dashboard = () => {
                   {/* Grid lines */}
                   {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => (
                     <line key={i} x1={chartPad} y1={chartPad + usableH * pct} x2={chartW - chartPad} y2={chartPad + usableH * pct}
-                      stroke="#1a1f3a" strokeWidth="1" strokeDasharray="4,4" />
+                      stroke="rgba(0,255,255,0.06)" strokeWidth="1" strokeDasharray="4,4" />
                   ))}
                   {/* Area */}
                   <path d={areaPath} fill="url(#areaGrad)" />
                   {/* Line */}
-                  <path d={linePath} fill="none" stroke="#00d4ff" strokeWidth="2.5" filter="url(#glow)" strokeLinejoin="round" />
+                  <path d={linePath} fill="none" stroke="#00ffff" strokeWidth="2" filter="url(#glow)" strokeLinejoin="round" />
                   {/* Data points */}
                   {activityPoints.map((p, i) => (
                     <g key={i}>
-                      <circle cx={p.x} cy={p.y} r="5" fill="#0a0e27" stroke="#00d4ff" strokeWidth="2" />
-                      <circle cx={p.x} cy={p.y} r="3" fill="#00d4ff" />
+                      <circle cx={p.x} cy={p.y} r="4" fill="#050a18" stroke="#00ffff" strokeWidth="2" />
+                      <circle cx={p.x} cy={p.y} r="2" fill="#00ffff" />
                       <text x={p.x} y={chartH - 8} textAnchor="middle" fill="#888" fontSize="10" fontFamily="inherit">
                         {formatShortDate(p.date)}
                       </text>
-                      <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#00d4ff" fontSize="11" fontWeight="600" fontFamily="inherit">
+                      <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#00ffff" fontSize="11" fontWeight="600" fontFamily="inherit">
                         {p.count}
                       </text>
                     </g>
@@ -385,13 +385,13 @@ const Dashboard = () => {
                       const largeArc = angle > 180 ? 1 : 0;
                       const pathD = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
                       return (
-                        <path key={i} d={pathD} fill={ROLE_COLORS[item.role] || '#888'} stroke="#0a0e27" strokeWidth="2" opacity="0.9" />
+                        <path key={i} d={pathD} fill={ROLE_COLORS[item.role] || '#5a7a8a'} stroke="#050a18" strokeWidth="2" opacity="0.85" />
                       );
                     });
                   })()}
-                  <circle cx="100" cy="100" r="40" fill="#0f1219" />
-                  <text x="100" y="96" textAnchor="middle" fill="#e0e0e0" fontSize="20" fontWeight="700" fontFamily="inherit">{totalRoleUsers}</text>
-                  <text x="100" y="112" textAnchor="middle" fill="#888" fontSize="10" fontFamily="inherit">USERS</text>
+                  <circle cx="100" cy="100" r="40" fill="#050a18" />
+                  <text x="100" y="96" textAnchor="middle" fill="#f0f4ff" fontSize="20" fontWeight="700" fontFamily="inherit">{totalRoleUsers}</text>
+                  <text x="100" y="112" textAnchor="middle" fill="#5a7a8a" fontSize="10" fontFamily="inherit">USERS</text>
                 </svg>
                 <div className="donut-legend">
                   {roleData.map((item, i) => (
