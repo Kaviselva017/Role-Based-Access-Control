@@ -28,7 +28,7 @@
   margin-bottom: 24px;
 }
 
-.key-gen-section {
+.generate-key-section {
   background: rgba(5, 10, 24, 0.85);
   border: 1px solid rgba(0, 255, 255, 0.08);
   border-radius: 6px;
@@ -36,7 +36,7 @@
   margin-bottom: 24px;
 }
 
-.key-gen-section h3 {
+.generate-key-section h3 {
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 600;
@@ -45,14 +45,14 @@
   margin-bottom: 16px;
 }
 
-.key-gen-form {
+.generate-form {
   display: flex;
   gap: 12px;
   align-items: flex-end;
   flex-wrap: wrap;
 }
 
-.key-gen-form label {
+.form-group label {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--cyber-text-dim);
@@ -62,8 +62,8 @@
   margin-bottom: 6px;
 }
 
-.key-gen-form select,
-.key-gen-form input {
+.form-group select,
+.form-group input {
   padding: 12px 16px;
   background: rgba(5, 10, 24, 0.9);
   border: 1px solid rgba(0, 255, 255, 0.1);
@@ -75,14 +75,14 @@
   transition: all 0.3s ease;
 }
 
-.key-gen-form select:focus,
-.key-gen-form input:focus {
+.form-group select:focus,
+.form-group input:focus {
   outline: none;
   border-color: rgba(0, 255, 255, 0.35);
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
-.key-gen-btn {
+.generate-btn {
   padding: 12px 24px;
   background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 200, 255, 0.18));
   color: var(--cyber-cyan);
@@ -97,13 +97,13 @@
   transition: all 0.3s ease;
 }
 
-.key-gen-btn:hover {
+.generate-btn:hover {
   background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 200, 255, 0.3));
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
   transform: translateY(-1px);
 }
 
-.key-gen-btn:disabled {
+.generate-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -196,7 +196,7 @@
   background: rgba(0, 255, 255, 0.02);
 }
 
-.key-active-badge {
+.status-badge {
   padding: 3px 10px;
   border-radius: 2px;
   font-size: 9px;
@@ -205,25 +205,25 @@
   text-transform: uppercase;
 }
 
-.key-active-badge.active {
+.status-badge.active {
   background: rgba(0, 255, 136, 0.1);
   color: var(--cyber-green);
   border: 1px solid rgba(0, 255, 136, 0.2);
 }
 
-.key-active-badge.expired {
+.status-badge.expired {
   background: rgba(255, 51, 102, 0.08);
   color: var(--cyber-red);
   border: 1px solid rgba(255, 51, 102, 0.15);
 }
 
-.key-active-badge.revoked {
+.status-badge.revoked {
   background: rgba(90, 122, 138, 0.1);
   color: var(--cyber-text-muted);
   border: 1px solid rgba(90, 122, 138, 0.2);
 }
 
-.key-revoke-btn {
+.revoke-btn {
   padding: 6px 14px;
   background: rgba(255, 51, 102, 0.06);
   border: 1px solid rgba(255, 51, 102, 0.2);
@@ -236,7 +236,7 @@
   transition: all 0.3s ease;
 }
 
-.key-revoke-btn:hover {
+.revoke-btn:hover {
   background: rgba(255, 51, 102, 0.12);
   border-color: rgba(255, 51, 102, 0.4);
 }
