@@ -4,8 +4,10 @@ from bson import ObjectId
 import secrets
 import hashlib
 
+import os
+
 # MongoDB Connection
-MONGODB_URL = 'mongodb://localhost:27017'
+MONGODB_URL = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
 client = MongoClient(MONGODB_URL)
 db = client['company_chatbot_rbac']
 
