@@ -377,7 +377,7 @@ form {
   opacity: 0.6;
 }
 
-.input-wrapper input {
+.login-container .input-wrapper input {
   width: 100%;
   box-sizing: border-box;
   padding: 14px 16px 14px 54px;
@@ -391,12 +391,12 @@ form {
   transition: all 0.3s ease;
 }
 
-.input-wrapper input::placeholder {
+.login-container .input-wrapper input::placeholder {
   color: var(--cyber-text-muted);
   letter-spacing: 2px;
 }
 
-.input-wrapper input:focus {
+.login-container .input-wrapper input:focus {
   outline: none;
   border-color: var(--cyber-cyan);
   box-shadow:
@@ -414,7 +414,7 @@ form {
   transition: opacity 0.3s ease;
 }
 
-.input-wrapper input:focus ~ .input-glow {
+.login-container .input-wrapper input:focus ~ .input-glow {
   opacity: 0.5;
 }
 
