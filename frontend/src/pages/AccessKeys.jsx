@@ -18,6 +18,7 @@ const AccessKeys = () => {
     if (user.role === 'admin') {
       loadUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUserId]);
 
   const loadKeys = async () => {
