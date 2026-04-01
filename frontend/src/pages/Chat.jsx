@@ -1,18 +1,26 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Chat.css';
 
 const Chat = () => {
   const { user, token } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // Load chat history on component mount
-    loadChatHistory();
-  }, []);
+    if (location.state && location.state.newChat) {
+      // Instantly clear the screen
+      setMessages([]);
+    } else {
+      // Load chat history normally
+      loadChatHistory();
+    }
+  }, [location.key]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive

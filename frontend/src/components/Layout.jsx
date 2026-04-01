@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Layout.css';
 
@@ -23,42 +24,47 @@ const Layout = ({ children }) => {
         </div>
 
         <nav className="navigation">
-          <a href="/chat" className="nav-item">
+          <Link to="/chat" state={{ newChat: true }} className="new-chat-btn">
+            <span className="nav-icon">➕</span>
+            <span>New Chat</span>
+          </Link>
+
+          <Link to="/chat" className="nav-item">
             <span className="nav-icon">💬</span>
             <span>Chat</span>
-          </a>
+          </Link>
 
-          <a href="/history" className="nav-item">
+          <Link to="/history" className="nav-item">
             <span className="nav-icon">📜</span>
             <span>History</span>
-          </a>
+          </Link>
 
           {hasPermission('upload_docs') && (
-            <a href="/upload" className="nav-item">
+            <Link to="/upload" className="nav-item">
               <span className="nav-icon">📤</span>
               <span>Upload Docs</span>
-            </a>
+            </Link>
           )}
 
           {hasPermission('view_dashboard') && (
-            <a href="/dashboard" className="nav-item">
+            <Link to="/dashboard" className="nav-item">
               <span className="nav-icon">📊</span>
               <span>Dashboard</span>
-            </a>
+            </Link>
           )}
 
           {hasPermission('manage_users') && (
-            <a href="/users" className="nav-item">
+            <Link to="/users" className="nav-item">
               <span className="nav-icon">👥</span>
               <span>Users</span>
-            </a>
+            </Link>
           )}
 
           {hasPermission('generate_keys') && (
-            <a href="/access-keys" className="nav-item">
+            <Link to="/access-keys" className="nav-item">
               <span className="nav-icon">🔑</span>
               <span>Access Keys</span>
-            </a>
+            </Link>
           )}
         </nav>
 

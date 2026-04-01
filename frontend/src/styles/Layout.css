@@ -116,6 +116,55 @@
 .role-badge.role-engineering { background: rgba(100,149,237,0.15); color: #6495ed; border: 1px solid rgba(100,149,237,0.4); }
 .role-badge.role-employee { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.4); }
 
+/* New Chat Button */
+.new-chat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(167, 139, 250, 0.2));
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 15px rgba(0, 212, 255, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.new-chat-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: skewX(-20deg);
+  transition: all 0.5s ease;
+}
+
+.new-chat-btn:hover {
+  transform: translateY(-2px) translateZ(15px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.8);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(167, 139, 250, 0.3));
+}
+
+.new-chat-btn:hover::before {
+  left: 150%;
+}
+
+.new-chat-btn .nav-icon {
+  font-size: 16px;
+  filter: drop-shadow(0 0 5px rgba(0, 212, 255, 0.8));
+}
+
 /* Navigation */
 .navigation {
   display: flex;

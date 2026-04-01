@@ -28,26 +28,36 @@ def extract_text_from_document(content, file_type='txt'):
     else:
         return content
 
-def chunk_text(text, chunk_size=500, overlap=50):
-    """Split text into overlapping chunks for embedding"""
+def chunk_text(text, chunk_size=200, overlap=20):
+    """Split text into precise, smaller chunks (1-2 sentences) for more exact, laser-focused answers."""
+    # Aggressive pre-cleaning to remove messy markdown lines like ---------------
+    text = re.sub(r'[-=]{3,}', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    
     chunks = []
-    sentences = text.split('.')
+    # Split by common sentence terminators but keep reasonable formatting
+    raw_sentences = re.split(r'(?<=[.!?]) +|\n', text)
+    
     current_chunk = []
     current_size = 0
     
-    for sentence in sentences:
+    for sentence in raw_sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+            
         current_chunk.append(sentence)
         current_size += len(sentence)
         
         if current_size >= chunk_size:
-            chunks.append('. '.join(current_chunk).strip())
-            # Keep last few sentences for overlap
-            current_chunk = current_chunk[-2:]
+            chunks.append(' '.join(current_chunk).strip())
+            # Keep only the last sentence for context overlap to stay precise
+            current_chunk = current_chunk[-1:]
             current_size = sum(len(s) for s in current_chunk)
     
     # Add remaining text
     if current_chunk:
-        chunks.append('. '.join(current_chunk).strip())
+        chunks.append(' '.join(current_chunk).strip())
     
     return [c for c in chunks if len(c) > 20]
 
@@ -88,7 +98,7 @@ def search_relevant_documents(query, department=None, limit=3):
         for doc in indexed_docs:
             try:
                 text = doc['content']
-                chunks = chunk_text(text, chunk_size=500, overlap=50)
+                chunks = chunk_text(text, chunk_size=150, overlap=20)
                 if not chunks:
                     continue
                 
@@ -147,8 +157,13 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
     # Ensure we deliver the exact matched text directly from the dataset.
     clean_chunk = best_doc['content'].strip()
     
-    # Follow exact output format requested
-    response = f"- Answer:\n{clean_chunk}\n\n"
+    # Further aggressive cleaning of any remaining dashed lines or formatting artifacts
+    clean_chunk = re.sub(r'[-=]{2,}', ' ', clean_chunk)
+    clean_chunk = re.sub(r'\*+', '', clean_chunk)
+    clean_chunk = re.sub(r'\s+', ' ', clean_chunk).strip()
+    
+    # Follow exact output format requested, but clean
+    response = f"- Answer: {clean_chunk}\n\n"
     response += f"- Source: {best_doc['filename']}"
 
     return {
