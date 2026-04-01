@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Chat.css';
 
 const Chat = () => {
   const { user, token } = useContext(AuthContext);
   const location = useLocation();
-  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,6 +19,7 @@ const Chat = () => {
       // Load chat history normally
       loadChatHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.key]);
 
   useEffect(() => {

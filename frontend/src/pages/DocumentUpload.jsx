@@ -54,7 +54,7 @@ const DocumentUpload = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         setMessage(`Document "${selectedFile.name}" uploaded successfully!`);
         setMessageType('success');
         setSelectedFile(null);
@@ -114,7 +114,7 @@ const DocumentUpload = () => {
         )}
 
         <div className="department-section">
-          <label htmlFor="department">// DEPARTMENT</label>
+          <label htmlFor="department">{"// DEPARTMENT"}</label>
           <select
             id="department"
             value={department}
