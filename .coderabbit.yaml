@@ -1,0 +1,39 @@
+# coderabbit.yaml
+# Configuration file for CodeRabbit (https://coderabbit.ai)
+
+version: 2
+language: "en-US"
+tone_instructions: "Be professional, constructive, and highly technical. Focus on performance, security, and best practices."
+reviews:
+  # Enable/disable high-level summary.
+  summary: true
+  # Enable/disable auto-review of code.
+  auto_review:
+    enabled: true
+    drafts: true # Set to false if you don't want draft PRs reviewed
+    base_branches:
+      - main
+      - staging
+      - development
+  # Add specific paths to ignore or focus on
+  path_instructions:
+    - path: "**/*.{js,jsx}"
+      instructions: |
+        - Ensure React best practices (hooks dependencies, component structure).
+        - Verify environment variables are used properly.
+        - Check for robust error handling and loading states.
+    - path: "backend/**/*.py"
+      instructions: |
+        - Follow PEP 8 style guide where possible.
+        - Ensure Flask routes have proper RBAC and JWT validation.
+        - Look out for memory-efficient handling of embeddings and data chunks.
+    - path: "render.yaml"
+      instructions: |
+        - Review deployment architecture and environment variables.
+  # Enable early access features
+  high_level_summary: true
+  # Tools/Linters behavior
+  poe: true # PR Review comments
+  sequence_diagrams: true
+chat:
+  auto_reply: true

@@ -67,6 +67,31 @@ class Role:
             'permissions': ['chat', 'view_history'],
             'level': 2
         },
+        'sales': {
+            'name': 'Sales',
+            'permissions': ['chat', 'view_history'],
+            'level': 2
+        },
+        'operations': {
+            'name': 'Operations',
+            'permissions': ['chat', 'view_history'],
+            'level': 2
+        },
+        'it': {
+            'name': 'IT',
+            'permissions': ['chat', 'view_history'],
+            'level': 2
+        },
+        'legal': {
+            'name': 'Legal',
+            'permissions': ['chat', 'view_history'],
+            'level': 2
+        },
+        'customer_success': {
+            'name': 'Customer Success',
+            'permissions': ['chat', 'view_history'],
+            'level': 2
+        },
         'employee': {
             'name': 'Employee',
             'permissions': ['chat', 'view_history'],

@@ -12,7 +12,19 @@ const DocumentUpload = () => {
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState('');
 
-  const departments = ['Finance', 'HR', 'Marketing', 'Engineering'];
+  const departments = [
+    'All Roles',
+    'C-level', 
+    'Finance', 
+    'HR', 
+    'Marketing', 
+    'Engineering', 
+    'Sales', 
+    'Operations', 
+    'IT', 
+    'Legal',
+    'Customer Success'
+  ];
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -125,7 +137,7 @@ const DocumentUpload = () => {
           >
             <option value="">Select a department...</option>
             {departments.map((dept) => (
-              <option key={dept} value={dept}>
+              <option key={dept} value={dept === 'All Roles' ? 'General' : dept}>
                 {dept}
               </option>
             ))}

@@ -93,6 +93,11 @@ export const AuthProvider = ({ children }) => {
       'hr': ['chat', 'view_history'],
       'marketing': ['chat', 'view_history'],
       'engineering': ['chat', 'view_history'],
+      'sales': ['chat', 'view_history'],
+      'operations': ['chat', 'view_history'],
+      'it': ['chat', 'view_history'],
+      'legal': ['chat', 'view_history'],
+      'customer-success': ['chat', 'view_history'],
       'employee': ['chat', 'view_history']
     };
 
