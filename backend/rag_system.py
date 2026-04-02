@@ -9,6 +9,7 @@ import numpy as np
 from models import Document, ChatHistory
 import re
 import functools
+from prompt_templates import FINAL_PRODUCTION_PROMPT, RBAC_PERMISSION_MATRIX
 
 def cosine_similarity_np(a, b):
     """Pure numpy implementation of cosine similarity to avoid importing heavy sklearn/scipy"""
@@ -143,44 +144,73 @@ def search_relevant_documents(query, department=None, limit=3):
         return []
 
 def generate_rag_response(query, user_role, department, retrieved_docs):
-    """Generate response based on retrieved documents following strict enterprise instructions."""
+    """Generate response based on retrieved documents using the FINAL_PRODUCTION_PROMPT template.
+    Uses ALL retrieved chunks for richer, more comprehensive answers."""
     
     if not retrieved_docs:
         return {
-            'response': "No relevant information found.",
+            'response': "ℹ️ No relevant data found in your access scope for this query.",
             'source': 'None',
             'confidence': 0.0,
             'referenced_docs': []
         }
     
-    # Process the most relevant document
-    best_doc = retrieved_docs[0]
+    # Filter out very low similarity results
+    relevant_docs = [d for d in retrieved_docs if d['similarity'] > 0.1]
     
-    if best_doc['similarity'] < 0.1:  # Strict accuracy check
+    if not relevant_docs:
         return {
-            'response': "No relevant information found.",
+            'response': "ℹ️ No relevant data found in your access scope for this query.",
             'source': 'None',
-            'confidence': float(best_doc['similarity']),
+            'confidence': 0.0,
             'referenced_docs': []
         }
 
-    # Ensure we deliver the exact matched text directly from the dataset.
-    clean_chunk = best_doc['content'].strip()
+    # Build combined context from ALL relevant chunks (not just top-1)
+    context_parts = []
+    source_files = []
+    for i, doc in enumerate(relevant_docs):
+        clean_chunk = doc['content'].strip()
+        clean_chunk = re.sub(r'[-=]{2,}', ' ', clean_chunk)
+        clean_chunk = re.sub(r'\*+', '', clean_chunk)
+        clean_chunk = re.sub(r'\s+', ' ', clean_chunk).strip()
+        context_parts.append(f"[Chunk {i+1} | {doc['filename']} | Relevance: {doc['similarity']:.2f}]\n{clean_chunk}")
+        if doc['filename'] not in source_files:
+            source_files.append(doc['filename'])
+
+    combined_context = "\n\n".join(context_parts)
     
-    # Further aggressive cleaning of any remaining dashed lines or formatting artifacts
-    clean_chunk = re.sub(r'[-=]{2,}', ' ', clean_chunk)
-    clean_chunk = re.sub(r'\*+', '', clean_chunk)
-    clean_chunk = re.sub(r'\s+', ' ', clean_chunk).strip()
+    # Build response using the structured production prompt format
+    response_lines = []
     
-    # Follow exact output format requested, but clean
-    response = f"- Answer: {clean_chunk}\n\n"
-    response += f"- Source: {best_doc['filename']}"
+    # 📌 Answer: Direct combined content from all relevant chunks
+    best_chunk = relevant_docs[0]['content'].strip()
+    best_chunk = re.sub(r'[-=]{2,}', ' ', best_chunk)
+    best_chunk = re.sub(r'\*+', '', best_chunk)
+    best_chunk = re.sub(r'\s+', ' ', best_chunk).strip()
+    response_lines.append(f"📌 **Answer:**\n{best_chunk}")
+    
+    # 📊 Key Details: Additional data from other chunks if available
+    if len(relevant_docs) > 1:
+        details = []
+        for doc in relevant_docs[1:]:
+            detail = doc['content'].strip()
+            detail = re.sub(r'[-=]{2,}', ' ', detail)
+            detail = re.sub(r'\*+', '', detail)
+            detail = re.sub(r'\s+', ' ', detail).strip()
+            details.append(f"- {detail}")
+        response_lines.append(f"\n📊 **Key Details:**\n" + "\n".join(details))
+    
+    # 📂 Source
+    response_lines.append(f"\n📂 **Source:** {', '.join(source_files)}")
+    
+    response = "\n".join(response_lines)
 
     return {
         'response': response,
-        'source': best_doc['filename'],
-        'confidence': float(best_doc['similarity']),
-        'referenced_docs': [best_doc['filename']]
+        'source': ', '.join(source_files),
+        'confidence': float(relevant_docs[0]['similarity']),
+        'referenced_docs': source_files
     }
 
 def process_document_for_rag(doc_id, content, filename, department=''):
@@ -229,185 +259,70 @@ def process_document_for_rag(doc_id, content, filename, department=''):
 def get_role_based_response(query, user_role):
     """
     Generate role-based responses with access control.
-    Each role has specific guidelines on what they can access.
+    Uses the RBAC_PERMISSION_MATRIX from prompt_templates for consistency.
     """
     
-    # Define role guidelines and permissions
-    role_guidelines = {
-        'admin': {
-            'title': 'ADMINISTRATOR',
-            'access_level': 'FULL_SYSTEM_ACCESS',
-            'can_access': [
-                'system_configuration',
-                'user_management',
-                'security_audit_logs',
-                'all_department_data',
-                'financial_reports',
-                'hr_records',
-                'strategic_documents',
-                'api_management'
-            ],
-            'cannot_access': [],
-            'keywords_allowed': ['admin', 'system', 'config', 'user', 'security', 'audit', 'management']
-        },
-        'c-level': {
-            'title': 'EXECUTIVE (C-LEVEL)',
-            'access_level': 'STRATEGIC_ACCESS',
-            'can_access': [
-                'strategic_documents',
-                'financial_summaries',
-                'executive_reports',
-                'board_materials',
-                'high_level_metrics',
-                'cross_department_overview'
-            ],
-            'cannot_access': [
-                'individual_employee_records',
-                'system_configuration',
-                'security_logs',
-                'low_level_operations',
-                'other_department_details'
-            ],
-            'keywords_allowed': ['strategy', 'executive', 'board', 'financial', 'summary', 'overview', 'performance']
-        },
-        'finance': {
-            'title': 'FINANCE DEPARTMENT',
-            'access_level': 'DEPARTMENTAL_ACCESS',
-            'can_access': [
-                'financial_documents',
-                'budgets',
-                'expense_reports',
-                'revenue_data',
-                'financial_analysis',
-                'audit_trails'
-            ],
-            'cannot_access': [
-                'hr_employee_records',
-                'operations_details',
-                'admin_configurations',
-                'executive_decisions',
-                'other_department_specifics'
-            ],
-            'keywords_allowed': ['finance', 'budget', 'expense', 'revenue', 'accounting', 'audit', 'cost', 'profit']
-        },
-        'hr': {
-            'title': 'HUMAN RESOURCES',
-            'access_level': 'DEPARTMENTAL_ACCESS',
-            'can_access': [
-                'employee_records',
-                'payroll_information',
-                'benefits_data',
-                'training_materials',
-                'organizational_structure',
-                'hr_policies'
-            ],
-            'cannot_access': [
-                'financial_sensitive_data',
-                'system_configuration',
-                'security_audit_logs',
-                'strategic_confidential',
-                'other_department_specifics'
-            ],
-            'keywords_allowed': ['hr', 'employee', 'payroll', 'benefits', 'training', 'hiring', 'policy', 'organization']
-        },
-        'employee': {
-            'title': 'GENERAL EMPLOYEE',
-            'access_level': 'LIMITED_ACCESS',
-            'can_access': [
-                'personal_records',
-                'public_company_info',
-                'general_guidelines',
-                'training_materials',
-                'own_department_overview'
-            ],
-            'cannot_access': [
-                'other_employee_records',
-                'financial_data',
-                'strategic_documents',
-                'system_configuration',
-                'cross_department_confidential',
-                'executive_decisions'
-            ],
-            'keywords_allowed': ['my', 'personal', 'training', 'policy', 'guidelines', 'public']
-        },
-        'marketing': {
-            'title': 'MARKETING DEPARTMENT',
-            'access_level': 'DEPARTMENTAL_ACCESS',
-            'can_access': [
-                'marketing_materials',
-                'campaign_data',
-                'market_research',
-                'customer_insights',
-                'brand_guidelines',
-                'analytics_reports'
-            ],
-            'cannot_access': [
-                'financial_sensitive',
-                'hr_records',
-                'system_configuration',
-                'strategic_confidential',
-                'other_department_specifics'
-            ],
-            'keywords_allowed': ['marketing', 'campaign', 'brand', 'customer', 'market', 'analytics', 'content']
-        },
-        'engineering': {
-            'title': 'ENGINEERING DEPARTMENT',
-            'access_level': 'DEPARTMENTAL_ACCESS',
-            'can_access': [
-                'technical_documentation',
-                'system_architecture',
-                'code_standards',
-                'api_documentation',
-                'development_guidelines',
-                'tool_configurations'
-            ],
-            'cannot_access': [
-                'financial_data',
-                'hr_employee_details',
-                'strategic_business',
-                'system_admin_config',
-                'other_department_specifics'
-            ],
-            'keywords_allowed': ['engineering', 'technical', 'code', 'api', 'development', 'architecture', 'tool']
+    # Normalize role for lookup
+    role_key = user_role.capitalize() if user_role else 'Employee'
+    # Handle special cases
+    role_map = {
+        'admin': 'Admin',
+        'c-level': 'C-Level', 
+        'finance': 'Finance',
+        'hr': 'HR',
+        'marketing': 'Marketing',
+        'engineering': 'Engineering',
+        'employee': 'Employee'
+    }
+    role_key = role_map.get(user_role.lower(), 'Employee') if user_role else 'Employee'
+    
+    # Get permitted departments from the centralized permission matrix
+    role_config = RBAC_PERMISSION_MATRIX.get(role_key, RBAC_PERMISSION_MATRIX['Employee'])
+    accessible_depts = [d.lower() for d in role_config['accessible_departments']]
+    
+    # Admin and C-Level have unrestricted access — skip keyword blocking
+    if role_key in ['Admin', 'C-Level']:
+        return {
+            'response': "ℹ️ No relevant data found in your access scope for this query.",
+            'access_denied': False,
+            'role_info': {'title': role_config['description']}
         }
-    }
     
-    # Get user role guidelines
-    guidelines = role_guidelines.get(user_role, role_guidelines['employee'])
-    
-    # Check if query contains restricted keywords for this role
+    # Check if query contains restricted cross-departmental keywords
     query_lower = query.lower()
-    access_denied = False
     
-    # Check for restricted access
-    restricted_keywords = {
-        'admin': [],
-        'c-level': [],
-        'finance': ['employee', 'hr', 'operations', 'admin', 'executive', 'marketing', 'engineering', 'payroll'],
-        'hr': ['finance', 'financial', 'budget', 'security', 'strategic', 'marketing', 'engineering', 'revenue'],
-        'employee': ['finance', 'financial', 'hr', 'strategic', 'confidential', 'admin', 'marketing', 'engineering', 'cost', 'revenue', 'budget'],
-        'marketing': ['finance', 'financial', 'hr', 'system', 'strategic', 'admin', 'engineering', 'budget', 'revenue'],
-        'engineering': ['finance', 'financial', 'hr', 'business', 'admin', 'marketing', 'revenue', 'budget', 'sales']
+    # Department keywords to block for roles that don't have access
+    all_dept_keywords = {
+        'finance': ['expense', 'revenue', 'budget', 'p&l', 'tax', 'invoice', 'profit', 'cost', 'financial'],
+        'hr': ['employee', 'payroll', 'attendance', 'hiring', 'turnover', 'benefits', 'salary'],
+        'marketing': ['campaign', 'analytics', 'leads', 'brand', 'social media', 'conversion', 'roi'],
+        'engineering': ['api', 'architecture', 'deployment', 'server', 'endpoint', 'uptime'],
+        'admin': ['audit log', 'system config', 'security', 'user management'],
+        'c-level': ['strategic', 'executive', 'board', 'kpi']
     }
     
-    # Also strictly block cross-departmental queries missing from the allowed list
-    role_restricted = restricted_keywords.get(user_role, [])
-    for keyword in role_restricted:
+    # Build list of blocked keywords: any department NOT in the user's accessible list
+    blocked_keywords = []
+    for dept, keywords in all_dept_keywords.items():
+        if dept not in accessible_depts and dept != 'general':
+            blocked_keywords.extend(keywords)
+    
+    access_denied = False
+    for keyword in blocked_keywords:
         if keyword in query_lower:
             access_denied = True
             break
-            
-    # If the exact words are outside their role permissions
+    
     if access_denied:
         return {
-            'response': "Access Denied.",
+            'response': "⛔ Access Denied: You do not have permission to view this information.",
             'access_denied': True,
-            'role_info': {'title': guidelines['title']}
+            'role_info': {'title': role_config['description']}
         }
     
-    # Rule 3: If no relevant context is found -> respond: "No relevant information found."
     return {
-        'response': "No relevant information found.",
+        'response': "ℹ️ No relevant data found in your access scope for this query.",
         'access_denied': False,
-        'role_info': {'title': guidelines['title']}
+        'role_info': {'title': role_config['description']}
     }
+
