@@ -390,8 +390,12 @@ def upload_document(current_user):
             department=department
         )
         
+        # Index document for RAG search
+        from rag_system import process_document_for_rag
+        process_document_for_rag(doc_data['id'], content, file.filename, department)
+        
         return jsonify({
-            'message': 'Document uploaded successfully',
+            'message': 'Document uploaded and indexed successfully',
             'document': doc_data
         }), 201
     except Exception as e:

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/AccessKeys.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const AccessKeys = () => {
   const { token, user } = useContext(AuthContext);
@@ -25,8 +26,8 @@ const AccessKeys = () => {
     try {
       const url =
         user.role === 'admin'
-          ? `/api/access-keys?user_id=${selectedUserId}`
-          : '/api/access-keys';
+          ? `${API_BASE}/api/access-keys?user_id=${selectedUserId}`
+          : `${API_BASE}/api/access-keys`;
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -45,7 +46,7 @@ const AccessKeys = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(`${API_BASE}/api/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -60,7 +61,7 @@ const AccessKeys = () => {
   const handleGenerateKey = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/access-keys', {
+      const response = await fetch(`${API_BASE}/api/access-keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +93,7 @@ const AccessKeys = () => {
   const handleRevokeKey = async (keyId) => {
     if (window.confirm('Are you sure you want to revoke this key?')) {
       try {
-        const response = await fetch(`/api/access-keys/${keyId}`, {
+        const response = await fetch(`${API_BASE}/api/access-keys/${keyId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });

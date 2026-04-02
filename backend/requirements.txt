@@ -4,7 +4,7 @@ PyJWT==2.8.0
 pymongo==4.4.1
 python-dotenv==1.0.0
 Werkzeug==2.3.6
-scikit-learn>=1.0.0
-sentence-transformers>=2.2.0
+# Removed scikit-learn for memory efficiency
+fastembed>=0.2.0
 numpy>=1.21.0
 gunicorn==20.1.0

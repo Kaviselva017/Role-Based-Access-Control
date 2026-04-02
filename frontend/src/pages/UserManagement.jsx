@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/UserManagement.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const UserManagement = () => {
   const { token } = useContext(AuthContext);
@@ -27,7 +28,7 @@ const UserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch(`${API_BASE}/api/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -45,7 +46,7 @@ const UserManagement = () => {
 
   const loadRoles = async () => {
     try {
-      const response = await fetch('/api/roles');
+      const response = await fetch(`${API_BASE}/api/roles`);
       if (response.ok) {
         const data = await response.json();
         setRoles(data.roles);
@@ -66,7 +67,7 @@ const UserManagement = () => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +98,7 @@ const UserManagement = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch(`/api/users/${userId}`, {
+        const response = await fetch(`${API_BASE}/api/users/${userId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -115,7 +116,7 @@ const UserManagement = () => {
 
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +152,7 @@ const UserManagement = () => {
 
   const handleSaveEdit = async (userId) => {
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE}/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

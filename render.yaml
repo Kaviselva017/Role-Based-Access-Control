@@ -1,15 +1,31 @@
+# Full-Stack Deployment for Dragon Intelligence Platform
+# Automatic Deployment of both API and React Client
 services:
+  # 1. API Service (Python/Flask)
   - type: web
     name: dragon-intel-chatbot-api
     env: python
-    buildCommand: "cd backend && pip install -r requirements.txt"
-    startCommand: "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 4 --timeout 120"
+    buildCommand: "cd backend && pip install -r requirements.txt && python -c 'from fastembed import TextEmbedding; TextEmbedding(model_name=\"BAAI/bge-small-en-v1.5\")'"
+    startCommand: "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     envVars:
       - key: FLASK_DEBUG
         value: "0"
+      - key: MONGO_URI
+        sync: false # Input Atlas URI in Render dashboard
       - key: SECRET_KEY
         generateValue: true
-      - key: CHROMA_DIR
-        value: "chroma_db"
-      - key: PYTHON_VERSION
-        value: "3.10"
+      - key: CORS_ORIGINS
+        value: "*" # Broad for demo stability, can restrict later
+
+  # 2. UI Service (React Static Site)
+  - type: static
+    name: dragon-intel-chatbot-ui
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    publishPath: "frontend/build"
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          name: dragon-intel-chatbot-api
+          type: web
+          property: host

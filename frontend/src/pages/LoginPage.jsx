@@ -1,7 +1,7 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/LoginPage.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const LoginPage = () => {
   const { setAuthState } = useContext(AuthContext);
@@ -50,7 +50,7 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -85,7 +85,7 @@ const LoginPage = () => {
     }
 
     try {
-      const response = await fetch('/api/auth/verify-key', {
+      const response = await fetch(`${API_BASE}/api/auth/verify-key`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

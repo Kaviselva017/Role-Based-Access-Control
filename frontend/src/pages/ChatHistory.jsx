@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/ChatHistory.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const ChatHistory = () => {
   const { token } = useContext(AuthContext);
@@ -16,7 +17,7 @@ const ChatHistory = () => {
 
   const loadHistory = async () => {
     try {
-      const response = await fetch('/api/chat/history?limit=100', {
+      const response = await fetch(`${API_BASE}/api/chat/history?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Chat.css';
 
+const API_BASE = process.env.REACT_APP_API_URL || '';
+
 const Chat = () => {
   const { user, token } = useContext(AuthContext);
   const location = useLocation();
@@ -29,7 +31,7 @@ const Chat = () => {
 
   const loadChatHistory = async () => {
     try {
-      const response = await fetch('/api/chat/history?limit=20', {
+      const response = await fetch(`${API_BASE}/api/chat/history?limit=20`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {
@@ -61,7 +63,7 @@ const Chat = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,19 +143,32 @@ const Chat = () => {
                     <div className="message-label">
                       Dragon Intel - {formatTime(msg.timestamp)}
                       {msg.access_denied && ' (⊘ ACCESS DENIED)'}
-                      {msg.isError && ' (⚠ Error)'}
+                      {msg.isError && ' (⚠ ERROR)'}
                     </div>
-                    <p>{msg.content}</p>
+                    <div className="message-text-premium">
+                      {msg.content.includes('- Answer:') ? (
+                        <>
+                          <div className="ans-highlight">
+                            {msg.content.split('\n\n')[0].replace('- Answer: ', '')}
+                          </div>
+                          <div className="src-indicator">
+                            <span className="src-label">SOURCE:</span>
+                            <span className="src-value">{msg.content.split('- Source: ')[1] || (msg.docs && msg.docs[0])}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <p>{msg.content}</p>
+                      )}
+                    </div>
                     {msg.role_info && msg.access_denied && (
-                      <div className="role-info-box">
-                        <small>📍 Access Level: {msg.role_info.access_level}</small>
+                      <div className="role-info-card">
+                        <small>📍 REQUIRED LEVEL: {msg.role_info.access_level}</small>
                       </div>
                     )}
-                    {msg.docs && msg.docs.length > 0 && (
-                      <div className="referenced-docs">
-                        <strong>📎 Referenced:</strong>
+                    {msg.docs && msg.docs.length > 0 && !msg.content.includes('- Source:') && (
+                      <div className="referenced-docs-list">
                         {msg.docs.map((doc, i) => (
-                          <span key={i} className="doc-tag">{doc}</span>
+                          <span key={i} className="doc-tag-elite">{doc}</span>
                         ))}
                       </div>
                     )}

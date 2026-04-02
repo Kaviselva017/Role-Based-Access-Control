@@ -4,15 +4,22 @@ Uses embeddings to find relevant documents and generate context-aware responses
 """
 
 import os
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 from models import Document, ChatHistory
 import re
 import functools
 
-# Load embedding model
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+def cosine_similarity_np(a, b):
+    """Pure numpy implementation of cosine similarity to avoid importing heavy sklearn/scipy"""
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return np.dot(a, b) / (norm_a * norm_b)
+
+# Load embedding model (FastEmbed uses ONNX for low memory/CPU-only performance)
+embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
 def extract_text_from_document(content, file_type='txt'):
     """Extract text from various document formats"""
@@ -64,69 +71,72 @@ def chunk_text(text, chunk_size=200, overlap=20):
 def get_document_embeddings(text):
     """Generate embeddings for document text"""
     try:
-        embedding = embedding_model.encode(text, convert_to_numpy=True)
-        return embedding.tolist()
+        # TextEmbedding.embed returns a generator, so we take the first item
+        embedding_gen = embedding_model.embed([text])
+        return next(embedding_gen).tolist()
     except Exception as e:
         print(f"Embedding error: {e}")
         return None
 
 @functools.lru_cache(maxsize=1000)
 def get_cached_doc_embedding(text_content):
-    """Cached version of document embeddings for highly accurate and instant retrieval"""
-    return embedding_model.encode(text_content, convert_to_numpy=True)
+    """Cached version of document embeddings using FastEmbed"""
+    # TextEmbedding.embed returns a generator, so we take the first item
+    return next(embedding_model.embed([text_content]))
+
+from models import doc_chunks_collection
+from bson import ObjectId
 
 def search_relevant_documents(query, department=None, limit=3):
-    """Find relevant documents using semantic search"""
+    """Find relevant documents using pre-calculated embeddings in MongoDB"""
     try:
         # Get query embedding
-        query_embedding = embedding_model.encode(query, convert_to_numpy=True)
+        query_vec = next(embedding_model.embed([query]))
         
-        # Get all documents from department or all documents
+        # Build query filter
+        filter_q = {}
         if department:
-            documents = Document.get_documents_by_department(department)
-        else:
-            documents = Document.get_all_documents()
+            # Match role or 'General'
+            filter_q['$or'] = [
+                {'department': department.lower()},
+                {'department': 'general'},
+                {'department': ''}
+            ]
         
-        # Filter for indexed documents only
-        indexed_docs = [doc for doc in documents if doc.get('is_indexed')]
+        # Get all chunks matching department
+        all_chunks = list(doc_chunks_collection.find(filter_q))
         
-        if not indexed_docs:
+        if not all_chunks:
             return []
-        
-        # Calculate similarity with document content
+            
         results = []
-        for doc in indexed_docs:
-            try:
-                text = doc['content']
-                chunks = chunk_text(text, chunk_size=150, overlap=20)
-                if not chunks:
-                    continue
-                
-                best_similarity = -1.0
-                best_chunk = ""
-                
-                for chunk in chunks:
-                    chunk_embedding = get_cached_doc_embedding(chunk)
-                    similarity = cosine_similarity([query_embedding], [chunk_embedding])[0][0]
-                    if similarity > best_similarity:
-                        best_similarity = similarity
-                        best_chunk = chunk
-                
-                if best_similarity > 0.1: # Only include if there's some relevance
-                    results.append({
-                        'id': str(doc['_id']),
-                        'filename': doc['filename'],
-                        'content': best_chunk,  # Return the best matching chunk!
-                        'department': doc['department'],
-                        'similarity': float(best_similarity)
-                    })
-            except Exception as e:
-                print(f"Error processing doc {doc.get('filename')}: {e}")
-                continue
+        for chunk in all_chunks:
+            chunk_vec = np.array(chunk['embedding'])
+            similarity = cosine_similarity_np(query_vec, chunk_vec)
+            
+            if similarity > 0.1: # Minimum relevance threshold
+                results.append({
+                    'id': str(chunk['doc_id']),
+                    'filename': chunk['filename'],
+                    'content': chunk['content'],
+                    'department': chunk['department'],
+                    'similarity': float(similarity)
+                })
         
         # Sort by relevance
         results.sort(key=lambda x: x['similarity'], reverse=True)
-        return results[:limit]
+        
+        # Deduplicate results by content to avoid returning exact same chunk
+        seen_content = set()
+        unique_results = []
+        for r in results:
+            if r['content'] not in seen_content:
+                unique_results.append(r)
+                seen_content.add(r['content'])
+            if len(unique_results) >= limit:
+                break
+                
+        return unique_results
     
     except Exception as e:
         print(f"Search error: {e}")
@@ -173,21 +183,42 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
         'referenced_docs': [best_doc['filename']]
     }
 
-def process_document_for_rag(doc_id, content, filename):
-    """Process and store document embeddings for RAG"""
+def process_document_for_rag(doc_id, content, filename, department=''):
+    """Process and store document embeddings for RAG by creating pre-computed chunks"""
     try:
         # Extract and chunk text
         text = extract_text_from_document(content, filename.split('.')[-1])
-        chunks = chunk_text(text)
+        chunks = chunk_text(text, chunk_size=250, overlap=30)
         
         if not chunks:
             return False
+            
+        # Clean department
+        dept = department.lower() if department else ''
         
-        # Store embedding info
-        summary = '\n'.join(chunks[:3])  # First 3 chunks as summary
+        # Clear existing chunks for this document if any
+        doc_chunks_collection.delete_many({'doc_id': ObjectId(doc_id)})
         
+        # Store embeddings for each chunk
+        chunk_docs = []
+        # Embed all chunks in a batch for speed!
+        embeddings = list(embedding_model.embed(chunks))
+        
+        for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
+            chunk_docs.append({
+                'doc_id': ObjectId(doc_id),
+                'filename': filename,
+                'content': chunk,
+                'embedding': embedding.tolist(),
+                'department': dept,
+                'chunk_index': i
+            })
+            
+        if chunk_docs:
+            doc_chunks_collection.insert_many(chunk_docs)
+            
         # Mark document as indexed
-        Document.mark_indexed(doc_id, filename)
+        Document.mark_indexed(doc_id, True)
         
         return True
     except Exception as e:

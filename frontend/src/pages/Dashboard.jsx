@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext, useCallback } from 'react';
-import { AuthContext } from '../context/AuthContext';
 import '../styles/Dashboard.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const ROLE_COLORS = {
   'admin': '#ff3366',
@@ -46,7 +46,7 @@ const Dashboard = () => {
 
   const loadDashboard = useCallback(async () => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
+      const response = await fetch(`${API_BASE}/api/dashboard/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.ok) {

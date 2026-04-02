@@ -7,7 +7,8 @@ import hashlib
 import os
 
 # MongoDB Connection
-MONGODB_URL = os.getenv('MONGO_URI', 'mongodb://localhost:27017')
+# Support both MONGO_URI (often from Atlas) and MONGODB_URL (from your env example)
+MONGODB_URL = os.getenv('MONGO_URI') or os.getenv('MONGODB_URL') or 'mongodb://localhost:27017'
 client = MongoClient(MONGODB_URL)
 db = client['company_chatbot_rbac']
 
@@ -18,6 +19,7 @@ documents_collection = db['documents']
 access_keys_collection = db['access_keys']
 chat_history_collection = db['chat_history']
 queries_collection = db['queries']
+doc_chunks_collection = db['doc_chunks']
 
 # Create indexes
 users_collection.create_index('username', unique=True)
@@ -27,6 +29,8 @@ access_keys_collection.create_index('user_id')
 documents_collection.create_index('user_id')
 chat_history_collection.create_index('user_id')
 queries_collection.create_index('user_id')
+doc_chunks_collection.create_index('doc_id')
+doc_chunks_collection.create_index('department')
 
 
 class Role:
@@ -263,11 +267,11 @@ class Document:
         }))
     
     @staticmethod
-    def mark_indexed(doc_id, embedding_id):
+    def mark_indexed(doc_id, is_indexed=True):
         """Mark document as indexed in vector DB"""
         result = documents_collection.update_one(
             {'_id': ObjectId(doc_id)},
-            {'$set': {'is_indexed': True, 'embedding_id': embedding_id}}
+            {'$set': {'is_indexed': is_indexed}}
         )
         return result.modified_count > 0
     

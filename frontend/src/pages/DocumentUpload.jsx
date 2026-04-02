@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/DocumentUpload.css';
+
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const DocumentUpload = () => {
   const { token } = useContext(AuthContext);
@@ -45,7 +46,7 @@ const DocumentUpload = () => {
     formData.append('department', department);
 
     try {
-      const response = await fetch('/api/documents/upload', {
+      const response = await fetch(`${API_BASE}/api/documents/upload`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`
