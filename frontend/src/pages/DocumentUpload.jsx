@@ -6,7 +6,7 @@ const API_BASE = process.env.REACT_APP_API_URL || '';
 
 const DocumentUpload = () => {
   const { token } = useContext(AuthContext);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [department, setDepartment] = useState('');
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -27,8 +27,8 @@ const DocumentUpload = () => {
   ];
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    setSelectedFile(file);
+    const newFiles = Array.from(e.target.files);
+    checkAndAddFiles(newFiles);
   };
 
   const handleDragOver = (e) => {
@@ -39,50 +39,79 @@ const DocumentUpload = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      setSelectedFile(files[0]);
+    const newFiles = Array.from(e.dataTransfer.files);
+    checkAndAddFiles(newFiles);
+  };
+
+  const checkAndAddFiles = (newFiles) => {
+    if (!newFiles || newFiles.length === 0) return;
+    
+    // Calculate new total size
+    const currentSize = selectedFiles.reduce((acc, file) => acc + file.size, 0);
+    const incomingSize = newFiles.reduce((acc, file) => acc + file.size, 0);
+    
+    if (currentSize + incomingSize > 16 * 1024 * 1024) {
+      setMessage('Total file size cannot exceed 16MB limit');
+      setMessageType('error');
+      return;
     }
+
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+    setMessage(null);
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!selectedFile || !department) {
-      setMessage('Please select a file and department');
+    if (selectedFiles.length === 0 || !department) {
+      setMessage('Please select at least one file and a department');
       setMessageType('error');
       return;
     }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('department', department);
+    let successCount = 0;
+    let errors = [];
 
-    try {
-      const response = await fetch(`${API_BASE}/api/documents/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: formData
-      });
+    // Loop through each file and upload to the single-file backend endpoint
+    for (const file of selectedFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('department', department);
 
-      if (response.ok) {
-        await response.json();
-        setMessage(`Document "${selectedFile.name}" uploaded successfully!`);
-        setMessageType('success');
-        setSelectedFile(null);
-        setDepartment('');
+      try {
+        const response = await fetch(`${API_BASE}/api/documents/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          const error = await response.json();
+          errors.push(`${file.name}: ${error.message}`);
+        }
+      } catch (err) {
+        errors.push(`${file.name}: ${err.message}`);
+      }
+    }
+
+    setUploading(false);
+
+    if (errors.length > 0) {
+      if (successCount > 0) {
+        setMessage(`Uploaded ${successCount} files, but had errors: ${errors.join(', ')}`);
+        setMessageType('warning');
+        setSelectedFiles([]);
       } else {
-        const error = await response.json();
-        setMessage(error.message);
+        setMessage(`Upload failed: ${errors.join(', ')}`);
         setMessageType('error');
       }
-    } catch (err) {
-      setMessage(err.message);
-      setMessageType('error');
-    } finally {
-      setUploading(false);
+    } else {
+      setMessage(`Successfully uploaded ${successCount} document(s)!`);
+      setMessageType('success');
+      setSelectedFiles([]); 
+      // Do NOT reset department here so the user can keep uploading to the same role without re-selecting
     }
   };
 
@@ -113,17 +142,20 @@ const DocumentUpload = () => {
           <p className="drop-subtitle">TXT, MD, CSV – max 16MB</p>
           <input
             type="file"
+            multiple
             onChange={handleFileSelect}
             className="file-input"
             accept=".txt,.md,.csv,.pdf"
           />
         </div>
 
-        {selectedFile && (
-          <div className="file-info">
-            <p className="selected-file">
-              <span>📄</span> {selectedFile.name}
-            </p>
+        {selectedFiles.length > 0 && (
+          <div className="file-info" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+            {selectedFiles.map((file, idx) => (
+              <p key={idx} className="selected-file" style={{ marginBottom: '6px' }}>
+                <span>📄</span> {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            ))}
           </div>
         )}
 
@@ -147,7 +179,7 @@ const DocumentUpload = () => {
         <button
           type="submit"
           className="upload-btn"
-          disabled={uploading || !selectedFile}
+          disabled={uploading || selectedFiles.length === 0}
         >
           {uploading ? '⏳ UPLOADING...' : '✓ UPLOAD DOCUMENT'}
         </button>
