@@ -20,7 +20,8 @@ def cosine_similarity_np(a, b):
     return np.dot(a, b) / (norm_a * norm_b)
 
 # Load embedding model (FastEmbed uses ONNX for low memory/CPU-only performance)
-embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+# We set threads=1 to heavily reduce memory usage and prevent Render OOM crashes
+embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", threads=1)
 
 def extract_text_from_document(content, file_type='txt'):
     """Extract text from various document formats"""
@@ -231,8 +232,8 @@ def process_document_for_rag(doc_id, content, filename, department=''):
         
         # Store embeddings for each chunk
         chunk_docs = []
-        # Embed all chunks in a batch for speed!
-        embeddings = list(embedding_model.embed(chunks))
+        # Embed in small batches to PREVENT Render Free-Tier OOM memory crashes!
+        embeddings = list(embedding_model.embed(chunks, batch_size=4))
         
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             chunk_docs.append({
