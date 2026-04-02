@@ -88,12 +88,16 @@ const DocumentUpload = () => {
         if (response.ok) {
           successCount++;
         } else {
-          const error = await response.json();
+          const error = await response.json().catch(() => ({ message: 'Server error' }));
           errors.push(`${file.name}: ${error.message}`);
         }
       } catch (err) {
         errors.push(`${file.name}: ${err.message}`);
       }
+      
+      // Add a small 2.5-second breathing room delay between files so the AI embedding model 
+      // on the backend has time to cool down and doesn't overload memory
+      await new Promise(resolve => setTimeout(resolve, 2500));
     }
 
     setUploading(false);
