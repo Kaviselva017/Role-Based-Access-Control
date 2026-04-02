@@ -394,7 +394,14 @@ def upload_document(current_user):
         return jsonify({'message': 'No file selected'}), 400
     
     try:
-        content = file.read().decode('utf-8')
+        raw_bytes = file.read()
+        try:
+            content = raw_bytes.decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                content = raw_bytes.decode('cp1252')
+            except UnicodeDecodeError:
+                content = raw_bytes.decode('utf-8', errors='replace')
         
         doc_data = Document.upload_document(
             filename=file.filename,
