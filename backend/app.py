@@ -14,6 +14,20 @@ CORS(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 JWT_EXPIRATION = 24  # hours
 
+# Health Check / Root Index
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "ONLINE",
+        "platform": "Dragon Intelligence Platform",
+        "version": "1.0.0",
+        "endpoints": {
+            "auth": "/api/auth/login",
+            "chat": "/api/chat",
+            "stats": "/api/dashboard/stats"
+        }
+    }), 200
+
 # Middleware
 def token_required(f):
     """Decorator to check JWT token"""
