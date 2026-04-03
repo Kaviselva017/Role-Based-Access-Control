@@ -1,7 +1,9 @@
-﻿# Dragon Intelligence Platform - Start Script
-# Start both backend and frontend servers
+# Dragon Intelligence Platform - Start Script
+# Start Ollama, Backend, and Frontend safely
 
-Write-Host "Dragon Intelligence Platform - RBAC" -ForegroundColor Cyan
+Write-Host "===================================================" -ForegroundColor Cyan
+Write-Host "🐉 Starting Dragon Intel Offline Startup Sequence" -ForegroundColor Cyan
+Write-Host "===================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if MongoDB is running
@@ -13,18 +15,18 @@ if (-not $mongoTest) {
     Write-Host ""
 }
 
-# Start Backend
-Write-Host "[1/2] Starting Backend (Flask) on http://localhost:5000" -ForegroundColor Green
-Write-Host "    Press Ctrl+C to stop" -ForegroundColor DarkGray
-$backendProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd $PSScriptRoot\backend; python app.py" -PassThru
+# Start Ollama
+Write-Host "[1/3] Starting Ollama Engine (llama3.2)..." -ForegroundColor Green
+$ollamaProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "ollama run llama3.2" -PassThru
 Start-Sleep -Seconds 2
 
-# Start Frontend
-Write-Host ""
-Write-Host "[2/2] Starting Frontend (React) on http://localhost:3000" -ForegroundColor Green
-Write-Host "    Press Ctrl+C to stop" -ForegroundColor DarkGray
-Write-Host ""
+# Start Backend
+Write-Host "[2/3] Starting Backend (Flask) on http://localhost:5000..." -ForegroundColor Green
+$backendProcess = Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd $PSScriptRoot\backend; .\.venv\Scripts\activate; python app.py" -PassThru
+Start-Sleep -Seconds 3
 
+# Start Frontend
+Write-Host "[3/3] Starting Frontend (React) on http://localhost:3000..." -ForegroundColor Green
 cd "$PSScriptRoot\frontend"
 npm start
 
@@ -32,3 +34,4 @@ npm start
 Write-Host ""
 Write-Host "Stopping services..." -ForegroundColor Yellow
 Stop-Process -Id $backendProcess.Id -ErrorAction SilentlyContinue
+Stop-Process -Id $ollamaProcess.Id -ErrorAction SilentlyContinue
