@@ -27,6 +27,21 @@ const Chat = () => {
     setInput(roleTestQueries[roleName]);
   };
 
+  const parseBotResponse = (content) => {
+    // If it doesn't have the 📌 marker, return plaintext
+    if (!content.includes('📌')) return { type: 'plain', text: content };
+
+    const sections = {
+      answer: content.split('📌 Answer:')[1]?.split('📊')[0]?.strip() || '',
+      details: content.split('📊 Key Details:')[1]?.split('💡')[0]?.strip() || '',
+      insight: content.split('💡 Insight:')[1]?.split('🔗')[0]?.strip() || '',
+      related: content.split('🔗 Related Words:')[1]?.split('📂')[0]?.strip() || '',
+      source: content.split('📂 Source:')[1]?.strip() || ''
+    };
+
+    return { type: 'structured', ...sections };
+  };
+
   useEffect(() => {
     if (location.state && location.state.newChat) {
       // Instantly clear the screen
@@ -174,19 +189,49 @@ const Chat = () => {
                       {msg.isError && ' (⚠ ERROR)'}
                     </div>
                     <div className="message-text-premium">
-                      {msg.content.includes('- Answer:') ? (
-                        <>
-                          <div className="ans-highlight">
-                            {msg.content.split('\n\n')[0].replace('- Answer: ', '')}
-                          </div>
-                          <div className="src-indicator">
-                            <span className="src-label">SOURCE:</span>
-                            <span className="src-value">{msg.content.split('- Source: ')[1] || (msg.docs && msg.docs[0])}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <p>{msg.content}</p>
-                      )}
+                      {(() => {
+                        const parsed = parseBotResponse(msg.content);
+                        if (parsed.type === 'plain') return <p>{parsed.text}</p>;
+                        
+                        return (
+                          <>
+                            {parsed.answer && (
+                              <div className="ans-highlight">
+                                <span className="premium-label">📌 DIRECT ANSWER:</span>
+                                {parsed.answer}
+                              </div>
+                            )}
+                            {parsed.details && (
+                              <div className="ans-details-block">
+                                <span className="premium-label">📊 KEY DETAILS:</span>
+                                {parsed.details}
+                              </div>
+                            )}
+                            {parsed.insight && (
+                              <div className="ans-insight-block">
+                                <span className="premium-label">💡 STRATEGIC INSIGHT:</span>
+                                {parsed.insight}
+                              </div>
+                            )}
+                            {parsed.related && (
+                              <div className="ans-related-block">
+                                <span className="premium-label">🔗 RELATED WORDS:</span>
+                                <div className="related-tags">
+                                  {parsed.related.split(',').map((tag, i) => (
+                                    <span key={i} className="tag-word">{tag.trim()}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {parsed.source && (
+                              <div className="src-indicator">
+                                <span className="src-label">📂 SOURCE:</span>
+                                <span className="src-value">{parsed.source}</span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     {msg.role_info && msg.access_denied && (
                       <div className="role-info-card">
