@@ -152,6 +152,9 @@ def search_relevant_documents(query, department=None, limit=3):
     except Exception as e:
         print(f"Search error: {e}")
         return []
+    finally:
+        import gc
+        gc.collect() # Immediate memory reclaim after search
 
 import google.generativeai as genai
 

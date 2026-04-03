@@ -10,11 +10,29 @@ try:
 except ImportError:
     from models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
     from rag_system import search_relevant_documents, generate_rag_response, get_role_based_response, process_document_for_rag
+import gc
+import traceback
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {
     "origins": ["*", "https://role-based-access-control-kaviselva017s-projects.vercel.app"]
 }})
+
+# Global Error Handler for Production Diagnostics
+@app.errorhandler(500)
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Log the mistake to the terminal
+    err_trace = traceback.format_exc()
+    print(f"CRITICAL BACKEND ERROR:\n{err_trace}")
+    
+    # Return JSON error with traceback clue (only for debugging phase)
+    return jsonify({
+        "message": "INTERNAL SERVER ERROR (CRASH)",
+        "error_type": type(e).__name__,
+        "clue": str(e),
+        "trace": err_trace.split('\n')[-2] # Show the most recent line of death
+    }), 500
 
 @app.after_request
 def after_request(response):
