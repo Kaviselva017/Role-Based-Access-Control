@@ -31,13 +31,24 @@ const Chat = () => {
     // If it doesn't have the 📌 marker, return plaintext
     if (!content.includes('📌')) return { type: 'plain', text: content };
 
-    const sections = {
-      answer: content.split('📌 Answer:')[1]?.split('📊')[0]?.strip() || '',
-      details: content.split('📊 Key Details:')[1]?.split('💡')[0]?.strip() || '',
-      insight: content.split('💡 Insight:')[1]?.split('🔗')[0]?.strip() || '',
-      related: content.split('🔗 Related Words:')[1]?.split('📂')[0]?.strip() || '',
-      source: content.split('📂 Source:')[1]?.strip() || ''
+    // Use regular expressions for more robust splitting, ignoring case and spacing
+    const getSection = (marker, nextMarker) => {
+      const parts = content.split(marker);
+      if (parts.length < 2) return '';
+      const section = nextMarker ? parts[1].split(nextMarker)[0] : parts[1];
+      return section.trim();
     };
+
+    const sections = {
+      answer: getSection('📌 Answer:', '📊'),
+      details: getSection('📊 Key Details:', '💡'),
+      insight: getSection('💡 Insight:', '🔗'),
+      related: getSection('🔗 Related Words:', '📂'),
+      source: getSection('📂 Source:', null)
+    };
+
+    // If answer is still empty after structured attempt, fallback to plain
+    if (!sections.answer) return { type: 'plain', text: content };
 
     return { type: 'structured', ...sections };
   };
