@@ -531,14 +531,28 @@
 }
 
 .tag-word {
-  padding: 3px 10px;
-  background: rgba(0, 255, 255, 0.08);
-  border: 1px solid rgba(0, 255, 255, 0.15);
-  border-radius: 2px;
-  font-size: 10px;
+  padding: 4px 12px;
+  background: rgba(0, 255, 157, 0.05);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+  border-radius: 4px;
+  font-size: 11px;
   font-family: var(--font-mono);
-  color: var(--cyber-cyan);
-  text-transform: lowercase;
+  color: #00ff9d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tag-word.clickable {
+  cursor: pointer;
+}
+
+.tag-word.clickable:hover {
+  background: rgba(0, 255, 157, 0.2);
+  border-color: #00ff9d;
+  box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+  transform: translateY(-3px) scale(1.05);
+  text-shadow: 0 0 8px #00ff9d;
 }
 
 .ans-highlight .premium-label {

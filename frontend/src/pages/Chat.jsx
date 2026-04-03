@@ -229,7 +229,18 @@ const Chat = () => {
                                 <span className="premium-label">🔗 RELATED WORDS:</span>
                                 <div className="related-tags">
                                   {parsed.related.split(',').map((tag, i) => (
-                                    <span key={i} className="tag-word">{tag.trim()}</span>
+                                    <span 
+                                      key={i} 
+                                      className="tag-word clickable" 
+                                      onClick={() => {
+                                        setInput(tag.trim());
+                                        // Use a small timeout to let the state update or directly call the handler
+                                        // But safer to just set input and let user click send or use ref
+                                        setTimeout(() => document.querySelector('.send-btn')?.click(), 100);
+                                      }}
+                                    >
+                                      {tag.trim()}
+                                    </span>
                                   ))}
                                 </div>
                               </div>

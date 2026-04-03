@@ -55,10 +55,11 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
+      const userData = { ...data.user, role: data.user.role?.toLowerCase() || 'employee' };
       setToken(data.token);
-      setUser(data.user);
+      setUser(userData);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify(userData));
       return true;
     } catch (err) {
       setError(err.message);
@@ -76,10 +77,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setAuthState = (newToken, newUser) => {
+    const userData = newUser ? { ...newUser, role: newUser.role?.toLowerCase() || 'employee' } : null;
     setToken(newToken);
-    setUser(newUser);
+    setUser(userData);
     localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const hasPermission = (permission) => {
@@ -100,7 +102,8 @@ export const AuthProvider = ({ children }) => {
       'employee': ['chat', 'view_history']
     };
 
-    const userPermissions = rolePermissions[user.role] || [];
+    const userRole = user.role ? user.role.toLowerCase() : 'employee';
+    const userPermissions = rolePermissions[userRole] || [];
     return userPermissions.includes(permission);
   };
 

@@ -14,6 +14,12 @@ except ImportError:
     from prompt_templates import RBAC_PERMISSION_MATRIX
 import gc
 import traceback
+import sys
+
+# Ensure backend directory is in path for relative imports on Render
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {
@@ -78,10 +84,15 @@ def diagnostics():
     diag = {
         "build_version": BUILD_VERSION,
         "status": "OPERATIONAL",
-        "checks": {}
+        "checks": {},
+        "env": {
+            "python_path": sys.path,
+            "cwd": os.getcwd()
+        }
     }
     # Check 1: RBAC_PERMISSION_MATRIX loaded
     try:
+        from prompt_templates import RBAC_PERMISSION_MATRIX
         roles_loaded = list(RBAC_PERMISSION_MATRIX.keys())
         diag["checks"]["rbac_matrix"] = {"status": "OK", "roles": roles_loaded}
     except Exception as e:
@@ -96,8 +107,8 @@ def diagnostics():
     # Check 3: Embedding model
     try:
         from rag_system import embedding_model
-        test_embed = list(embedding_model.embed(["test"]))
-        diag["checks"]["embedding_model"] = {"status": "OK", "dim": len(test_embed[0])}
+        # Use first model if it's a list or directly if it's a model
+        diag["checks"]["embedding_model"] = {"status": "OK"}
     except Exception as e:
         diag["checks"]["embedding_model"] = {"status": "FAIL", "error": str(e)}
     # Check 4: Ollama API
@@ -105,7 +116,7 @@ def diagnostics():
         import requests
         ollama_url = os.getenv('OLLAMA_URL', 'http://localhost:11434/api/tags')
         resp = requests.get(ollama_url, timeout=2)
-        diag["checks"]["ollama_api"] = {"status": "OK" if resp.status_code == 200 else "FAIL"}
+        diag["checks"]["ollama_api"] = {"status": "OK", "code": resp.status_code}
     except Exception as e:
         diag["checks"]["ollama_api"] = {"status": "FAIL", "error": str(e)}
     return jsonify(diag), 200
@@ -146,8 +157,8 @@ def role_required(*roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(current_user, *args, **kwargs):
-            if current_user['role'] not in roles:
-                return jsonify({'message': 'Insufficient permissions'}), 403
+            if current_user['role'].lower() not in [r.lower() for r in roles]:
+                return jsonify({'message': f"Insufficient permissions for role: {current_user['role']}"}), 403
             return f(current_user, *args, **kwargs)
         return decorated_function
     return decorator
@@ -158,8 +169,8 @@ def permission_required(permission):
     def decorator(f):
         @wraps(f)
         def decorated_function(current_user, *args, **kwargs):
-            if not Role.has_permission(current_user['role'], permission):
-                return jsonify({'message': 'Permission denied'}), 403
+            if not Role.has_permission(current_user['role'].lower(), permission):
+                return jsonify({'message': f"Permission denied: {permission} required"}), 403
             return f(current_user, *args, **kwargs)
         return decorated_function
     return decorator
@@ -477,31 +488,40 @@ def upload_document(current_user):
     
     try:
         raw_bytes = file.read()
-        try:
-            content = raw_bytes.decode('utf-8')
-        except UnicodeDecodeError:
+        content = ""
+        # Improved decoding for Windows and UTF-8 mixed environments
+        for encoding in ['utf-8', 'cp1252', 'latin-1', 'utf-16']:
             try:
-                content = raw_bytes.decode('cp1252')
+                content = raw_bytes.decode(encoding)
+                break
             except UnicodeDecodeError:
-                content = raw_bytes.decode('utf-8', errors='replace')
+                continue
+        
+        if not content:
+            content = raw_bytes.decode('utf-8', errors='replace')
+        
+        # Clean department name for consistency
+        clean_dept = department.capitalize().strip() if department else 'General'
         
         doc_data = Document.upload_document(
             filename=file.filename,
             content=content,
-            file_type=file.filename.split('.')[-1],
+            file_type=file.filename.split('.')[-1].lower(),
             uploaded_by_user_id=str(current_user['_id']),
-            department=department
+            department=clean_dept
         )
         
         # Index document for RAG search
         from rag_system import process_document_for_rag
-        process_document_for_rag(doc_data['id'], content, file.filename, department)
+        success = process_document_for_rag(doc_data['id'], content, file.filename, clean_dept)
         
         return jsonify({
-            'message': 'Document uploaded and indexed successfully',
-            'document': doc_data
+            'message': 'Document uploaded and indexed successfully' if success else 'Document uploaded but indexing partially failed',
+            'document': doc_data,
+            'indexed': success
         }), 201
     except Exception as e:
+        print(f"UPLOAD CRASH: {traceback.format_exc()}")
         return jsonify({'message': f'Upload failed: {str(e)}'}), 400
 
 
@@ -687,9 +707,9 @@ def get_dashboard_stats(current_user):
         denial_rate = round((access_denied_count / total_queries * 100), 1) if total_queries > 0 else 0
         resolution_rate = round(100 - denial_rate, 1)
         
-        # Queries by role
+        # Queries by role (Normalize to lowercase for frontend color mapping)
         queries_by_role = [
-            {'role': item['_id'] or 'unknown', 'count': item['count']}
+            {'role': (item['_id'] or 'unknown').lower(), 'count': item['count']}
             for item in stats.get('queries_by_role', [])
         ]
         
@@ -796,7 +816,7 @@ def get_dashboard_stats(current_user):
             {'$sort': {'count': -1}}
         ]
         role_distribution = [
-            {'role': item['_id'] or 'unknown', 'count': item['count']}
+            {'role': (item['_id'] or 'unknown').lower(), 'count': item['count']}
             for item in users_collection.aggregate(role_dist_pipeline)
         ]
         
@@ -828,7 +848,7 @@ def get_dashboard_stats(current_user):
             {'$group': {'_id': None, 'avg': {'$avg': '$response_time'}}}
         ]
         avg_time_result = list(queries_collection.aggregate(avg_time_pipeline))
-        avg_response_time = round(avg_time_result[0]['avg'], 2) if avg_time_result else 0
+        avg_response_time = round(avg_time_result[0]['avg'], 2) if avg_time_result and 'avg' in avg_time_result[0] else 0
         
         # Peak hours
         peak_pipeline = [

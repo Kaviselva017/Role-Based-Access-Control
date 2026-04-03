@@ -29,16 +29,36 @@ def cosine_similarity_np(a, b):
 # We set threads=1 to heavily reduce memory usage and prevent Render OOM crashes
 embedding_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", threads=1)
 
-def extract_text_from_document(content, file_type='txt'):
-    """Extract text from various document formats"""
+def extract_text_from_document(content, file_type='txt', filename='', department=''):
+    """Extract text from various document formats and enhance CSV for semantic search"""
+    file_type = file_type.lower()
+    
     if file_type == 'txt':
         return content
     elif file_type == 'md':
-        # Remove markdown formatting
+        # Remove markdown formatting for cleaner search but keep readability
         text = re.sub(r'[#*_\[\]()]', '', content)
         return text
+    elif file_type == 'csv':
+        try:
+            import csv
+            import io
+            # Use string IO to parse CSV content
+            f = io.StringIO(content)
+            reader = csv.DictReader(f)
+            sentences = []
+            for row in reader:
+                # Filter out empty keys/values
+                valid_items = [f"{k}: {v}" for k, v in row.items() if k and v and str(v).strip()]
+                if valid_items:
+                    # Construct a descriptive semantic sentence for the embedding model
+                    sentence = f"In {filename} ({department}), a data record shows: " + ", ".join(valid_items) + "."
+                    sentences.append(sentence)
+            return "\n".join(sentences)
+        except Exception as e:
+            print(f"CSV Parsing Error: {e}")
+            return content # Fallback to raw
     elif file_type == 'pdf':
-        # For PDF, content should already be extracted
         return content
     else:
         return content
@@ -107,7 +127,7 @@ def search_relevant_documents(query, department=None, limit=3):
         # Build query filter
         filter_q = {}
         if department:
-            # Match role or 'General'
+            # Match role or 'General' (case-insensitive)
             filter_q['$or'] = [
                 {'department': department.lower()},
                 {'department': 'general'},
@@ -125,7 +145,7 @@ def search_relevant_documents(query, department=None, limit=3):
             chunk_vec = np.array(chunk['embedding'])
             similarity = cosine_similarity_np(query_vec, chunk_vec)
             
-            if similarity > 0.4: # Minimum relevance threshold
+            if similarity > 0.35: # Lower threshold for better recall as requested
                 results.append({
                     'id': str(chunk['doc_id']),
                     'filename': chunk['filename'],
@@ -262,26 +282,41 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
 
     # --- FALLBACK: Structured manual extraction ---
 
-    # --- FALLBACK: Structured manual extraction ---
-    response_lines = []
-    best_chunk = relevant_docs[0]['content'].strip()
-    # Simple formatting for direct answer - Truncate if it's massive (like raw CSV)
-    if len(best_chunk) > 500:
-        best_chunk = best_chunk[:500] + "... [Data truncated for readability]"
+    # --- FALLBACK: Intelligent Synthesis & Formatting ---
+    response_lines = ["⚠️ **[SYSTEM FALLLBACK - DATA EXTRACTION SUCCESSFUL]**",
+                      "\nI've located the following records in the company database that match your query:\n"]
     
-    response_lines.append(f"📌 **Manual Extraction:**\n{best_chunk}")
+    first_chunk = relevant_docs[0]['content'].strip()
     
+    # Check if this is a raw CSV or data record (heuristic: high comma density)
+    if first_chunk.count(',') > 4:
+        # Prettify the first record - convert csv/lists into a neat itemized summary
+        items = [i.strip() for i in first_chunk.split(',')]
+        pretty_items = "\n    ▫️ ".join(items[:15]) # Limit list length
+        response_lines.append(f"📌 **VERIFIED RECORD:**\n    ▫️ {pretty_items}")
+    else:
+        # Standard text chunk
+        response_lines.append(f"📌 **CORE INFO:**\n{first_chunk[:400]}")
+
     if len(relevant_docs) > 1:
         details = []
-        for doc in relevant_docs[1:3]: # Use at most 2 more chunks
+        for doc in relevant_docs[1:3]:
             content = doc['content'].strip()
-            if len(content) > 150:
+            # If sub-chunk is data-heavy, just use a snippet
+            if content.count(',') > 4: 
+                content = content.split(',')[0] + "... [Related Data Reference]"
+            elif len(content) > 150:
                 content = content[:150] + "..."
-            details.append(f"- {content}")
+            details.append(f"🔹 {content}")
         if details:
-            response_lines.append(f"\n📊 **Supporting Data:**\n" + "\n".join(details))
+            response_lines.append(f"\n📊 **SUPPORTING CONTEXT:**\n" + "\n".join(details))
         
-    response_lines.append(f"\n📂 **Source:** {', '.join(source_files[:3])}")
+    response_lines.append(f"\n📂 **SOURCE:** {', '.join(source_files[:3])}")
+    
+    # Add Manual Tags to keep UI interactive
+    active_dept = department.lower() if department else "general"
+    related_words = ["policy", "overview", "data", "report", active_dept]
+    response_lines.append(f"🔗 RELATED WORDS: {', '.join(related_words)}")
     
     return {
         'code': 1,
@@ -294,9 +329,9 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
 def process_document_for_rag(doc_id, content, filename, department=''):
     """Process and store document embeddings for RAG by creating pre-computed chunks"""
     try:
-        # Extract and chunk text
-        text = extract_text_from_document(content, filename.split('.')[-1])
-        chunks = chunk_text(text, chunk_size=250, overlap=30)
+        # Pass name/dept to extractor for semantic enhancement (esp for CSVs)
+        text = extract_text_from_document(content, filename.split('.')[-1], filename, department)
+        chunks = chunk_text(text, chunk_size=350, overlap=50)
         
         if not chunks:
             return False

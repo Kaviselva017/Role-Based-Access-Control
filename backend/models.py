@@ -104,11 +104,13 @@ class Role:
     
     @classmethod
     def get_role(cls, role_name):
-        return cls.ROLES.get(role_name)
+        if not role_name: return None
+        return cls.ROLES.get(role_name.lower())
     
     @classmethod
     def has_permission(cls, role_name, permission):
-        role = cls.get_role(role_name)
+        if not role_name: return False
+        role = cls.get_role(role_name.lower())
         return role and permission in role['permissions']
     
     @classmethod
@@ -127,7 +129,7 @@ class User:
             'username': username,
             'email': email,
             'password': hashlib.sha256(password.encode()).hexdigest(),
-            'role': role,
+            'role': role.lower(), # Store as lowercase for consistent RBAC
             'department': department,
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow(),
