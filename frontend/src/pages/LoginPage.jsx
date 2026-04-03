@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/LoginPage.css';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = "https://dragon-intel-api.onrender.com";
 
 const LoginPage = () => {
   const { setAuthState } = useContext(AuthContext);

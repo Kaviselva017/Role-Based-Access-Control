@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/DocumentUpload.css';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = "https://dragon-intel-api.onrender.com";
 
 const DocumentUpload = () => {
   const { token } = useContext(AuthContext);

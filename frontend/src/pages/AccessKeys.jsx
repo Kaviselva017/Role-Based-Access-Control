@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/AccessKeys.css';
 
-const API_BASE = process.env.REACT_APP_API_URL || '';
+const API_BASE = "https://dragon-intel-api.onrender.com";
 
 const AccessKeys = () => {
   const { token, user } = useContext(AuthContext);
