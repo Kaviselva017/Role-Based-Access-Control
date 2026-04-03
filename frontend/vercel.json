@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://dragon-intel-api.onrender.com/api/$1"
+      "destination": "https://role-based-access-control-q1et.onrender.com/api/$1"
     },
     {
       "source": "/(.*)",
