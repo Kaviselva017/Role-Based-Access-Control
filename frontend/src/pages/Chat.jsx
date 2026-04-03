@@ -85,16 +85,20 @@ const Chat = () => {
       } else {
         // Try to get JSON error, if not, use status text
         let errorMsg = 'Failed to get a response from the Dragon Intelligence terminal.';
+        let debugInfo = '';
         try {
           const errorData = await response.json();
           errorMsg = errorData.message || errorMsg;
+          if (errorData.clue) {
+            debugInfo = `\n🔍 CLUE: ${errorData.clue}\n📍 TRACE: ${errorData.trace || 'Unknown'}`;
+          }
         } catch (e) {
           errorMsg = `Server error code: ${response.status} (${response.statusText})`;
         }
         
         setMessages((prev) => [...prev, {
           role: 'bot',
-          content: `⚠️ CONNECT REJECTED: ${errorMsg}`,
+          content: `⚠️ CONNECT REJECTED: ${errorMsg}${debugInfo}`,
           timestamp: new Date().toISOString(),
           isError: true
         }]);
@@ -103,7 +107,7 @@ const Chat = () => {
       console.error('Fetch error:', err);
       setMessages((prev) => [...prev, {
         role: 'bot',
-        content: `📡 SIGNAL LOST: Terminal timed out or server is resetting. Please wait 10s and retry. (${err.message})`,
+        content: `📡 SIGNAL LOST: Terminal timed out or server is resetting. (${err.message})`,
         timestamp: new Date().toISOString(),
         isError: true
       }]);
