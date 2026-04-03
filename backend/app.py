@@ -513,15 +513,28 @@ def chat(current_user):
             'source': 'Role-based'
         }), 200
 
-    # Try to search for relevant documents first (RAG)
-    user_department = current_user.get('department', '')
-    search_dept = None if current_user['role'] in ['admin', 'c-level'] else user_department
+    # Determine document silos to search based on Role instead of free-text Department
+    role_key = current_user['role'].capitalize() if current_user['role'] else 'Employee'
+    # Core role mapping for consistency
+    role_map = {'admin': 'Admin', 'c-level': 'C-Level', 'finance': 'Finance', 'hr': 'HR', 'marketing': 'Marketing', 'engineering': 'Engineering', 'employee': 'Employee'}
+    role_key = role_map.get(current_user['role'].lower(), 'Employee')
+    
+    role_config = RBAC_PERMISSION_MATRIX.get(role_key, RBAC_PERMISSION_MATRIX['Employee'])
+    accessible_depts = [d.lower() for d in role_config['accessible_departments']]
+    
+    # Try to search for relevant documents in ALL accessible silos
+    # Passing the primary department silo to the search
+    primary_dept = accessible_depts[0] if accessible_depts and accessible_depts[0] != 'general' else 'general'
+    
+    # If admin/c-level, search everything
+    search_dept = None if role_key in ['Admin', 'C-Level'] else primary_dept
     retrieved_docs = search_relevant_documents(query, department=search_dept, limit=3)
     
     # Generate response based on documents or role-based fallback
     if retrieved_docs and any(doc['similarity'] > 0.1 for doc in retrieved_docs):
         # Use RAG for document-based answer
-        rag_result = generate_rag_response(query, current_user['role'], search_dept, retrieved_docs)
+        user_dept_str = current_user.get('department', 'General')
+        rag_result = generate_rag_response(query, current_user['role'], user_dept_str, retrieved_docs)
         response = rag_result['response']
         referenced_docs = rag_result['referenced_docs']
         access_denied = False
