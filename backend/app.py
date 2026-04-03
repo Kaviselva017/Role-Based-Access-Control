@@ -590,239 +590,193 @@ def get_chat_history(current_user):
 @permission_required('view_dashboard')
 def get_dashboard_stats(current_user):
     """Get comprehensive dashboard statistics (admin only)"""
-    from models import users_collection, queries_collection, documents_collection, chat_history_collection, access_keys_collection
-    
-    stats = QueryMetrics.get_dashboard_stats()
-    
-    # ── Total counts ──
-    total_queries = stats['total_queries']
-    total_users = stats['total_users']
-    access_denied_count = stats['access_denied']
-    total_documents = documents_collection.count_documents({})
-    total_keys = access_keys_collection.count_documents({'is_active': True})
-    
-    # ── Active today ──
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    active_today = len(queries_collection.distinct('user_id', {'timestamp': {'$gte': today_start}}))
-    
-    # ── Resolution / denial rate ──
-    denial_rate = round((access_denied_count / total_queries * 100), 1) if total_queries > 0 else 0
-    resolution_rate = round(100 - denial_rate, 1)
-    
-    # ── Queries by role ──
-    queries_by_role = [
-        {'role': item['_id'] or 'unknown', 'count': item['count']}
-        for item in stats['queries_by_role']
-    ]
-    
-    # ── Daily activity (last 7 days) ──
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-    daily_pipeline = [
-        {'$match': {'timestamp': {'$gte': seven_days_ago}}},
-        {'$group': {
-            '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp'}},
-            'count': {'$sum': 1},
-            'denied': {'$sum': {'$cond': ['$access_denied', 1, 0]}}
-        }},
-        {'$sort': {'_id': 1}}
-    ]
-    daily_activity_raw = list(queries_collection.aggregate(daily_pipeline))
-    
-    # Fill in missing days
-    daily_activity = []
-    for i in range(7):
-        day = (datetime.utcnow() - timedelta(days=6-i)).strftime('%Y-%m-%d')
-        found = next((d for d in daily_activity_raw if d['_id'] == day), None)
-        daily_activity.append({
-            'date': day,
-            'count': found['count'] if found else 0,
-            'denied': found['denied'] if found else 0
-        })
-    
-    # ── Top queries (aggregated) ──
-    top_queries_pipeline = [
-        {'$group': {'_id': '$query', 'count': {'$sum': 1}, 'last_used': {'$max': '$timestamp'}}},
-        {'$sort': {'count': -1}},
-        {'$limit': 8}
-    ]
-    top_queries = [
-        {'query': item['_id'], 'count': item['count'], 'last_used': item['last_used'].isoformat() if item.get('last_used') else None}
-        for item in chat_history_collection.aggregate(top_queries_pipeline)
-    ]
-    
-    # ── Top denied queries ──
-    denied_pipeline = [
-        {'$match': {'access_denied': True}},
-        {'$group': {
-            '_id': '$query',
-            'count': {'$sum': 1},
-            'roles': {'$addToSet': '$role'},
-            'last_attempt': {'$max': '$timestamp'}
-        }},
-        {'$sort': {'count': -1}},
-        {'$limit': 6}
-    ]
-    top_denied = [
-        {
-            'query': item['_id'],
-            'count': item['count'],
-            'roles': item['roles'],
-            'last_attempt': item['last_attempt'].isoformat() if item.get('last_attempt') else None
-        }
-        for item in queries_collection.aggregate(denied_pipeline)
-    ]
-    
-    # ── All users with full details ──
-    all_users = list(users_collection.find({}, {'password': 0}))
-    users_detail = []
-    for u in all_users:
-        uid = u['_id']
-        user_query_count = queries_collection.count_documents({'user_id': uid})
-        user_denied_count = queries_collection.count_documents({'user_id': uid, 'access_denied': True})
-        user_chat_count = chat_history_collection.count_documents({'user_id': uid})
-        active_keys = access_keys_collection.count_documents({'user_id': uid, 'is_active': True})
+    try:
+        from models import users_collection, queries_collection, documents_collection, chat_history_collection, access_keys_collection
         
-        # Get first and last query timestamps
-        first_query = queries_collection.find_one({'user_id': uid}, sort=[('timestamp', 1)])
-        last_query = queries_collection.find_one({'user_id': uid}, sort=[('timestamp', -1)])
+        stats = QueryMetrics.get_dashboard_stats()
         
-        users_detail.append({
-            'id': str(uid),
-            'username': u.get('username', ''),
-            'email': u.get('email', ''),
-            'role': u.get('role', 'employee'),
-            'department': u.get('department', ''),
-            'is_active': u.get('is_active', True),
-            'created_at': u['created_at'].isoformat() if u.get('created_at') else None,
-            'last_login': u['last_login'].isoformat() if u.get('last_login') else None,
-            'total_queries': user_query_count,
-            'denied_queries': user_denied_count,
-            'chat_messages': user_chat_count,
-            'active_keys': active_keys,
-            'first_seen': first_query['timestamp'].isoformat() if first_query else None,
-            'last_active': last_query['timestamp'].isoformat() if last_query else None,
-        })
-    
-    # ── Documents breakdown ──
-    docs_by_dept_pipeline = [
-        {'$group': {'_id': '$department', 'count': {'$sum': 1}, 'indexed': {'$sum': {'$cond': ['$is_indexed', 1, 0]}}}},
-        {'$sort': {'count': -1}}
-    ]
-    docs_by_dept = [
-        {'department': item['_id'] or 'Unassigned', 'count': item['count'], 'indexed': item['indexed']}
-        for item in documents_collection.aggregate(docs_by_dept_pipeline)
-    ]
-    
-    # ── Role distribution ──
-    role_dist_pipeline = [
-        {'$group': {'_id': '$role', 'count': {'$sum': 1}}},
-        {'$sort': {'count': -1}}
-    ]
-    role_distribution = [
-        {'role': item['_id'] or 'unknown', 'count': item['count']}
-        for item in users_collection.aggregate(role_dist_pipeline)
-    ]
-    
-    # ── Security issues / alerts ──
-    security_issues = []
-    
-    # Check for users with no login
-    never_logged_in = users_collection.count_documents({'last_login': None})
-    if never_logged_in > 0:
-        security_issues.append({
-            'severity': 'warning',
-            'type': 'inactive_users',
-            'message': f'{never_logged_in} user(s) have never logged in',
-            'count': never_logged_in
-        })
-    
-    # Check high denial rate
-    if denial_rate > 20:
-        security_issues.append({
-            'severity': 'high',
-            'type': 'high_denial_rate',
-            'message': f'High access denial rate: {denial_rate}% of all queries',
-            'count': access_denied_count
-        })
-    
-    # Check for expired keys
-    expired_keys = access_keys_collection.count_documents({
-        'is_active': True,
-        'expires_at': {'$lt': datetime.utcnow()}
-    })
-    if expired_keys > 0:
-        security_issues.append({
-            'severity': 'medium',
-            'type': 'expired_keys',
-            'message': f'{expired_keys} active key(s) have expired but not revoked',
-            'count': expired_keys
-        })
-    
-    # Check for unindexed documents
-    unindexed = documents_collection.count_documents({'is_indexed': False})
-    if unindexed > 0:
-        security_issues.append({
-            'severity': 'info',
-            'type': 'unindexed_docs',
-            'message': f'{unindexed} document(s) uploaded but not indexed in vector DB',
-            'count': unindexed
-        })
-    
-    # Users with high denial rate
-    for ud in users_detail:
-        if ud['total_queries'] >= 3 and ud['denied_queries'] / ud['total_queries'] > 0.5:
-            security_issues.append({
-                'severity': 'medium',
-                'type': 'user_high_denial',
-                'message': f"User '{ud['username']}' has {ud['denied_queries']}/{ud['total_queries']} queries denied ({round(ud['denied_queries']/ud['total_queries']*100)}%)",
-                'count': ud['denied_queries']
+        # Total counts
+        total_queries = stats.get('total_queries', 0)
+        total_users = stats.get('total_users', 0)
+        access_denied_count = stats.get('access_denied', 0)
+        total_documents = documents_collection.count_documents({})
+        total_keys = access_keys_collection.count_documents({'is_active': True})
+        
+        # Active today
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        active_today = len(queries_collection.distinct('user_id', {'timestamp': {'$gte': today_start}}))
+        
+        # Resolution / denial rate
+        denial_rate = round((access_denied_count / total_queries * 100), 1) if total_queries > 0 else 0
+        resolution_rate = round(100 - denial_rate, 1)
+        
+        # Queries by role
+        queries_by_role = [
+            {'role': item['_id'] or 'unknown', 'count': item['count']}
+            for item in stats.get('queries_by_role', [])
+        ]
+        
+        # Daily activity (last 7 days)
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        daily_pipeline = [
+            {'$match': {'timestamp': {'$gte': seven_days_ago}}},
+            {'$group': {
+                '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp'}},
+                'count': {'$sum': 1},
+                'denied': {'$sum': {'$cond': ['$access_denied', 1, 0]}}
+            }},
+            {'$sort': {'_id': 1}}
+        ]
+        daily_activity_raw = list(queries_collection.aggregate(daily_pipeline))
+        
+        # Fill in missing days
+        daily_activity = []
+        for i in range(7):
+            day = (datetime.utcnow() - timedelta(days=6-i)).strftime('%Y-%m-%d')
+            found = next((d for d in daily_activity_raw if d['_id'] == day), None)
+            daily_activity.append({
+                'date': day,
+                'count': found['count'] if found else 0,
+                'denied': found['denied'] if found else 0
             })
-    
-    # ── Average response time ──
-    avg_time_pipeline = [
-        {'$match': {'response_time': {'$gt': 0}}},
-        {'$group': {'_id': None, 'avg': {'$avg': '$response_time'}}}
-    ]
-    avg_time_result = list(queries_collection.aggregate(avg_time_pipeline))
-    avg_response_time = round(avg_time_result[0]['avg'], 2) if avg_time_result else 0
-    
-    # ── Peak hours ──
-    peak_pipeline = [
-        {'$group': {'_id': {'$hour': '$timestamp'}, 'count': {'$sum': 1}}},
-        {'$sort': {'count': -1}},
-        {'$limit': 5}
-    ]
-    peak_hours = [
-        {'hour': item['_id'], 'count': item['count']}
-        for item in queries_collection.aggregate(peak_pipeline)
-    ]
-    
-    return jsonify({
-        'stats': {
-            'total_queries': total_queries,
-            'total_users': total_users,
-            'access_denied': access_denied_count,
-            'active_today': active_today,
-            'total_documents': total_documents,
-            'total_active_keys': total_keys,
-            'denial_rate': denial_rate,
-            'resolution_rate': resolution_rate,
-            'avg_response_time': avg_response_time,
-            'queries_by_role': queries_by_role,
-            'role_distribution': role_distribution,
-        },
-        'daily_activity': daily_activity,
-        'top_queries': top_queries,
-        'top_denied': top_denied,
-        'users': users_detail,
-        'documents': {
-            'total': total_documents,
-            'by_department': docs_by_dept
-        },
-        'security_issues': security_issues,
-        'peak_hours': peak_hours,
-        'server_time': datetime.utcnow().isoformat()
-    }), 200
+
+        # Top queries
+        top_queries_pipeline = [
+            {'$group': {'_id': '$query', 'count': {'$sum': 1}, 'last_used': {'$max': '$timestamp'}}},
+            {'$sort': {'count': -1}},
+            {'$limit': 8}
+        ]
+        top_queries = [
+            {'query': item['_id'], 'count': item['count'], 'last_used': item['last_used'].isoformat() if item.get('last_used') else None}
+            for item in chat_history_collection.aggregate(top_queries_pipeline)
+        ]
+        
+        # Top denied queries
+        denied_pipeline = [
+            {'$match': {'access_denied': True}},
+            {'$group': {
+                '_id': '$query',
+                'count': {'$sum': 1},
+                'roles': {'$addToSet': '$role'},
+                'last_attempt': {'$max': '$timestamp'}
+            }},
+            {'$sort': {'count': -1}},
+            {'$limit': 6}
+        ]
+        top_denied = [
+            {
+                'query': item['_id'],
+                'count': item['count'],
+                'roles': item['roles'],
+                'last_attempt': item['last_attempt'].isoformat() if item.get('last_attempt') else None
+            }
+            for item in queries_collection.aggregate(denied_pipeline)
+        ]
+        
+        # All users with full details
+        all_users = list(users_collection.find({}, {'password': 0}))
+        users_detail = []
+        for u in all_users:
+            uid = u['_id']
+            user_query_count = queries_collection.count_documents({'user_id': uid})
+            user_denied_count = queries_collection.count_documents({'user_id': uid, 'access_denied': True})
+            user_chat_count = chat_history_collection.count_documents({'user_id': uid})
+            active_keys = access_keys_collection.count_documents({'user_id': uid, 'is_active': True})
+            
+            first_query = queries_collection.find_one({'user_id': uid}, sort=[('timestamp', 1)])
+            last_query = queries_collection.find_one({'user_id': uid}, sort=[('timestamp', -1)])
+            
+            users_detail.append({
+                'id': str(uid),
+                'username': u.get('username', ''),
+                'email': u.get('email', ''),
+                'role': u.get('role', 'employee'),
+                'department': u.get('department', ''),
+                'is_active': u.get('is_active', True),
+                'created_at': u['created_at'].isoformat() if u.get('created_at') else None,
+                'last_login': u['last_login'].isoformat() if u.get('last_login') else None,
+                'total_queries': user_query_count,
+                'denied_queries': user_denied_count,
+                'chat_messages': user_chat_count,
+                'active_keys': active_keys,
+                'first_seen': first_query['timestamp'].isoformat() if first_query else None,
+                'last_active': last_query['timestamp'].isoformat() if last_query else None,
+            })
+        
+        # Documents breakdown
+        docs_by_dept_pipeline = [
+            {'$group': {'_id': '$department', 'count': {'$sum': 1}, 'indexed': {'$sum': {'$cond': ['$is_indexed', 1, 0]}}}},
+            {'$sort': {'count': -1}}
+        ]
+        docs_by_dept = [
+            {'department': item['_id'] or 'Unassigned', 'count': item['count'], 'indexed': item['indexed']}
+            for item in documents_collection.aggregate(docs_by_dept_pipeline)
+        ]
+        
+        # Role distribution
+        role_dist_pipeline = [
+            {'$group': {'_id': '$role', 'count': {'$sum': 1}}},
+            {'$sort': {'count': -1}}
+        ]
+        role_distribution = [
+            {'role': item['_id'] or 'unknown', 'count': item['count']}
+            for item in users_collection.aggregate(role_dist_pipeline)
+        ]
+        
+        # Security issues / alerts
+        security_issues = []
+        never_logged_in = users_collection.count_documents({'last_login': None})
+        if never_logged_in > 0:
+            security_issues.append({
+                'severity': 'warning', 'type': 'inactive_users', 'count': never_logged_in,
+                'message': f'{never_logged_in} user(s) have never logged in'
+            })
+        
+        if denial_rate > 20:
+            security_issues.append({
+                'severity': 'high', 'type': 'high_denial_rate', 'count': access_denied_count,
+                'message': f'High access denial rate: {denial_rate}% of all queries'
+            })
+
+        for ud in users_detail:
+            if ud['total_queries'] >= 3 and ud['denied_queries'] / ud['total_queries'] > 0.5:
+                security_issues.append({
+                    'severity': 'medium', 'type': 'user_high_denial', 'count': ud['denied_queries'],
+                    'message': f"User '{ud['username']}' has {ud['denied_queries']}/{ud['total_queries']} queries denied"
+                })
+        
+        # Average response time
+        avg_time_pipeline = [
+            {'$match': {'response_time': {'$gt': 0}}},
+            {'$group': {'_id': None, 'avg': {'$avg': '$response_time'}}}
+        ]
+        avg_time_result = list(queries_collection.aggregate(avg_time_pipeline))
+        avg_response_time = round(avg_time_result[0]['avg'], 2) if avg_time_result else 0
+        
+        # Peak hours
+        peak_pipeline = [
+            {'$group': {'_id': {'$hour': '$timestamp'}, 'count': {'$sum': 1}}},
+            {'$sort': {'count': -1}}, {'$limit': 5}
+        ]
+        peak_hours = [{'hour': item['_id'], 'count': item['count']} for item in queries_collection.aggregate(peak_pipeline)]
+        
+        return jsonify({
+            'stats': {
+                'total_queries': total_queries, 'total_users': total_users, 'access_denied': access_denied_count,
+                'active_today': active_today, 'total_documents': total_documents, 'total_active_keys': total_keys,
+                'denial_rate': denial_rate, 'resolution_rate': resolution_rate, 'avg_response_time': avg_response_time,
+                'queries_by_role': queries_by_role, 'role_distribution': role_distribution,
+            },
+            'daily_activity': daily_activity, 'top_queries': top_queries, 'top_denied': top_denied, 'users': users_detail,
+            'documents': {'total': total_documents, 'by_department': docs_by_dept},
+            'security_issues': security_issues, 'peak_hours': peak_hours, 'server_time': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        print(f"Dashboard Stats Error: {str(e)}")
+        return jsonify({
+            'message': 'Failed to retrieve dashboard data',
+            'error': str(e), 'status': 'error'
+        }), 500
 
 
 @app.route('/api/dashboard/queries', methods=['GET'])
