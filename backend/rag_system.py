@@ -6,7 +6,10 @@ Uses embeddings to find relevant documents and generate context-aware responses
 import os
 from fastembed import TextEmbedding
 import numpy as np
-from models import Document, ChatHistory
+try:
+    from .models import Document, ChatHistory, doc_chunks_collection
+except ImportError:
+    from models import Document, ChatHistory, doc_chunks_collection
 import re
 import functools
 from prompt_templates import FINAL_PRODUCTION_PROMPT, RBAC_PERMISSION_MATRIX
