@@ -2,8 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Chat.css';
-
-const API_BASE = "https://dragon-intel-api.onrender.com";
+import { API_BASE_URL as API_BASE } from '../services/api';
 
 const Chat = () => {
   const { user, token } = useContext(AuthContext);

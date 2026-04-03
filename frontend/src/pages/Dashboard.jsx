@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/Dashboard.css';
-
-const API_BASE = "https://dragon-intel-api.onrender.com";
+import { API_BASE_URL as API_BASE } from '../services/api';
 
 const ROLE_COLORS = {
   'admin': '#ff3366',

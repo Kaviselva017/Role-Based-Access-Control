@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import '../styles/UserManagement.css';
-
-const API_BASE = "https://dragon-intel-api.onrender.com";
+import { API_BASE_URL as API_BASE } from '../services/api';
 
 const UserManagement = () => {
   const { token } = useContext(AuthContext);
