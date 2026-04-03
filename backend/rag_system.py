@@ -211,7 +211,12 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
             json={
                 "model": OLLAMA_MODEL,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                    "temperature": 0.0,
+                    "top_k": 10,
+                    "top_p": 0.5
+                }
             },
             timeout=30
         )

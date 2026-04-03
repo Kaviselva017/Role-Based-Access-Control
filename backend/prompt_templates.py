@@ -203,14 +203,17 @@ QUESTION:
 {question}
 
 OUTPUT FORMAT:
-1. 📌 Answer: [Direct response]
+1. 📌 Answer: [Direct, instant, and accurate response]
 2. 📊 Key Details: [Relevant facts/numbers]
 3. 💡 Insight: [Analysis if advanced question]
-4. 📂 Source: [Document name]
+4. 🔗 Related Words: [3-5 context-relevant keywords and tags separated by commas]
+5. 📂 Source: [Document name]
 
 Rules:
+- MUST REPLY INSTANTLY WITH MAXIMUM ACCURACY. KEEP IT VERY CONCISE.
 - Use ONLY context above — no hallucination
 - Include actual numbers and dates from context
+- Include accurate Related Words based on the domain context
 - If no data: "ℹ️ No relevant data found in your scope."
 - If restricted: "⛔ Access Denied"
 """

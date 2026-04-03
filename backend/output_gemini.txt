@@ -1,0 +1,6 @@
+Starting Local RAG Test...
+RESPONSE:
+📌 **Manual Extraction (ERROR: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. ):**
+The company's new remote work policy states that employees can work from home 3 days a week.
+
+📂 **Source:** remote_policy.pdf
