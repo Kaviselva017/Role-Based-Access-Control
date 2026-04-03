@@ -8,7 +8,7 @@ from models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, u
 from rag_system import search_relevant_documents, generate_rag_response, get_role_based_response
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
