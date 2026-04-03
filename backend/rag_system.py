@@ -92,7 +92,10 @@ def get_cached_doc_embedding(text_content):
     # TextEmbedding.embed returns a generator, so we take the first item
     return next(embedding_model.embed([text_content]))
 
-from models import doc_chunks_collection
+try:
+    from .models import doc_chunks_collection
+except ImportError:
+    from models import doc_chunks_collection
 from bson import ObjectId
 
 def search_relevant_documents(query, department=None, limit=3):
