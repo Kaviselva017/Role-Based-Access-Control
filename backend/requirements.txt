@@ -4,6 +4,7 @@ PyJWT==2.8.0
 pymongo==4.4.1
 python-dotenv==1.0.0
 Werkzeug==2.3.6
+dnspython
 # Removed scikit-learn for memory efficiency
 fastembed>=0.2.0
 numpy>=1.21.0
