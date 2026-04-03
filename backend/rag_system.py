@@ -12,7 +12,10 @@ except ImportError:
     from models import Document, ChatHistory, doc_chunks_collection
 import re
 import functools
-from prompt_templates import FINAL_PRODUCTION_PROMPT, RBAC_PERMISSION_MATRIX
+try:
+    from .prompt_templates import FINAL_PRODUCTION_PROMPT, RBAC_PERMISSION_MATRIX
+except ImportError:
+    from prompt_templates import FINAL_PRODUCTION_PROMPT, RBAC_PERMISSION_MATRIX
 
 def cosine_similarity_np(a, b):
     """Pure numpy implementation of cosine similarity to avoid importing heavy sklearn/scipy"""
