@@ -4,11 +4,22 @@ from functools import wraps
 from datetime import datetime, timedelta
 import jwt
 import os
-from models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
-from rag_system import search_relevant_documents, generate_rag_response, get_role_based_response
+try:
+    from .models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
+    from .rag_system import search_relevant_documents, generate_rag_response, get_role_based_response, process_document_for_rag
+except ImportError:
+    from models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
+    from rag_system import search_relevant_documents, generate_rag_response, get_role_based_response, process_document_for_rag
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
