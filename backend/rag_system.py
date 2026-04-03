@@ -227,18 +227,26 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
     # --- FALLBACK: Structured manual extraction ---
     response_lines = []
     best_chunk = relevant_docs[0]['content'].strip()
-    # Simple formatting for direct answer
-    response_lines.append(f"📌 **Direct Answer:**\n{best_chunk}")
+    # Simple formatting for direct answer - Truncate if it's massive (like raw CSV)
+    if len(best_chunk) > 500:
+        best_chunk = best_chunk[:500] + "... [Data truncated for readability]"
+    
+    response_lines.append(f"📌 **Manual Extraction:**\n{best_chunk}")
     
     if len(relevant_docs) > 1:
         details = []
-        for doc in relevant_docs[1:]:
-            details.append(f"- {doc['content'].strip()}")
-        response_lines.append(f"\n📊 **Supporting Data:**\n" + "\n".join(details[:3]))
+        for doc in relevant_docs[1:3]: # Use at most 2 more chunks
+            content = doc['content'].strip()
+            if len(content) > 150:
+                content = content[:150] + "..."
+            details.append(f"- {content}")
+        if details:
+            response_lines.append(f"\n📊 **Supporting Data:**\n" + "\n".join(details))
         
-    response_lines.append(f"\n📂 **Source:** {', '.join(source_files)}")
+    response_lines.append(f"\n📂 **Source:** {', '.join(source_files[:3])}")
     
     return {
+        'code': 1,
         'response': "\n".join(response_lines),
         'source': ', '.join(source_files),
         'confidence': float(relevant_docs[0]['similarity']),
