@@ -307,6 +307,10 @@ def get_role_based_response(query, user_role):
     Generate role-based responses with access control.
     Uses the RBAC_PERMISSION_MATRIX from prompt_templates for consistency.
     """
+    try:
+        from prompt_templates import RBAC_PERMISSION_MATRIX
+    except ImportError:
+        from .prompt_templates import RBAC_PERMISSION_MATRIX
     
     # Normalize role for lookup
     role_key = user_role.capitalize() if user_role else 'Employee'
