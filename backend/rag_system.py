@@ -162,7 +162,7 @@ import google.generativeai as genai
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
 # Try-except for Gemini model initialization to handle missing keys gracefully in dev
 try:
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
 except Exception:
     model = None
 
@@ -226,8 +226,11 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
                 'referenced_docs': source_files
             }
         except Exception as e:
+            gemini_error = f"ERROR: {str(e)}"
             print(f"Gemini synthesis logic timed out or failed: {e}")
             # Fall through to the manual extraction below
+    else:
+        gemini_error = "ERROR: Model None or Missing API Key"
 
     # --- FALLBACK: Structured manual extraction ---
     response_lines = []
