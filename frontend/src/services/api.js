@@ -1,5 +1,5 @@
 // API Configuration and utilities
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://role-based-access-control-q1et.onrender.com";
 
 class APIError extends Error {
   constructor(status, message) {

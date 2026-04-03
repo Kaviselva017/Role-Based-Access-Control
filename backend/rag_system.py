@@ -125,7 +125,7 @@ def search_relevant_documents(query, department=None, limit=3):
             chunk_vec = np.array(chunk['embedding'])
             similarity = cosine_similarity_np(query_vec, chunk_vec)
             
-            if similarity > 0.1: # Minimum relevance threshold
+            if similarity > 0.4: # Minimum relevance threshold
                 results.append({
                     'id': str(chunk['doc_id']),
                     'filename': chunk['filename'],
@@ -153,11 +153,23 @@ def search_relevant_documents(query, department=None, limit=3):
         print(f"Search error: {e}")
         return []
 
+import google.generativeai as genai
+
+# Setup Gemini model
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+# Try-except for Gemini model initialization to handle missing keys gracefully in dev
+try:
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception:
+    model = None
+
 def generate_rag_response(query, user_role, department, retrieved_docs):
-    """Generate response based on retrieved documents using the FINAL_PRODUCTION_PROMPT template.
-    Uses ALL retrieved chunks for richer, more comprehensive answers."""
+    """
+    Generate an intelligent summarized response based on retrieved context using Google Gemini.
+    Strictly adheres to RBAC rules and provides structured output.
+    """
     
-    if not retrieved_docs:
+    if not retrieved_docs or len(retrieved_docs) == 0:
         return {
             'response': "ℹ️ No relevant data found in your access scope for this query.",
             'source': 'None',
@@ -165,8 +177,8 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
             'referenced_docs': []
         }
     
-    # Filter out very low similarity results
-    relevant_docs = [d for d in retrieved_docs if d['similarity'] > 0.1]
+    # Filter for quality again to be sure (limit 5 for Gemini context)
+    relevant_docs = [d for d in retrieved_docs if d['similarity'] > 0.4][:5]
     
     if not relevant_docs:
         return {
@@ -176,48 +188,58 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
             'referenced_docs': []
         }
 
-    # Build combined context from ALL relevant chunks (not just top-1)
-    context_parts = []
+    # Build context string for the AI
+    context_str = ""
     source_files = []
     for i, doc in enumerate(relevant_docs):
-        clean_chunk = doc['content'].strip()
-        clean_chunk = re.sub(r'[-=]{2,}', ' ', clean_chunk)
-        clean_chunk = re.sub(r'\*+', '', clean_chunk)
-        clean_chunk = re.sub(r'\s+', ' ', clean_chunk).strip()
-        context_parts.append(f"[Chunk {i+1} | {doc['filename']} | Relevance: {doc['similarity']:.2f}]\n{clean_chunk}")
+        context_str += f"[Document {i+1}: {doc['filename']} | Dept: {doc['department']}]\n{doc['content'].strip()}\n\n"
         if doc['filename'] not in source_files:
             source_files.append(doc['filename'])
 
-    combined_context = "\n\n".join(context_parts)
+    # Get the FINAL_PRODUCTION_PROMPT (ensure it's clean for synthesis)
+    from prompt_templates import FINAL_PRODUCTION_PROMPT
     
-    # Build response using the structured production prompt format
+    prompt = FINAL_PRODUCTION_PROMPT.format(
+        role=user_role,
+        department=department,
+        retrieved_chunks=context_str,
+        question=query
+    )
+
+    # Use Gemini if available, else fallback to hardcoded extraction
+    if model and os.getenv('GOOGLE_API_KEY'):
+        try:
+            # Generate synthesized response
+            response_gen = model.generate_content(prompt)
+            # Gemini response usually follows the template instructions well
+            full_response = response_gen.text.strip()
+            
+            return {
+                'response': full_response,
+                'source': ', '.join(source_files),
+                'confidence': float(relevant_docs[0]['similarity']),
+                'referenced_docs': source_files
+            }
+        except Exception as e:
+            print(f"Gemini generation error: {e}")
+            # Continue to fallback below
+
+    # --- FALLBACK: Structured manual extraction ---
     response_lines = []
-    
-    # 📌 Answer: Direct combined content from all relevant chunks
     best_chunk = relevant_docs[0]['content'].strip()
-    best_chunk = re.sub(r'[-=]{2,}', ' ', best_chunk)
-    best_chunk = re.sub(r'\*+', '', best_chunk)
-    best_chunk = re.sub(r'\s+', ' ', best_chunk).strip()
-    response_lines.append(f"📌 **Answer:**\n{best_chunk}")
+    # Simple formatting for direct answer
+    response_lines.append(f"📌 **Direct Answer:**\n{best_chunk}")
     
-    # 📊 Key Details: Additional data from other chunks if available
     if len(relevant_docs) > 1:
         details = []
         for doc in relevant_docs[1:]:
-            detail = doc['content'].strip()
-            detail = re.sub(r'[-=]{2,}', ' ', detail)
-            detail = re.sub(r'\*+', '', detail)
-            detail = re.sub(r'\s+', ' ', detail).strip()
-            details.append(f"- {detail}")
-        response_lines.append(f"\n📊 **Key Details:**\n" + "\n".join(details))
-    
-    # 📂 Source
+            details.append(f"- {doc['content'].strip()}")
+        response_lines.append(f"\n📊 **Supporting Data:**\n" + "\n".join(details[:3]))
+        
     response_lines.append(f"\n📂 **Source:** {', '.join(source_files)}")
     
-    response = "\n".join(response_lines)
-
     return {
-        'response': response,
+        'response': "\n".join(response_lines),
         'source': ', '.join(source_files),
         'confidence': float(relevant_docs[0]['similarity']),
         'referenced_docs': source_files

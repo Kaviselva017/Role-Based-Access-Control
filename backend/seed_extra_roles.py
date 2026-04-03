@@ -44,7 +44,7 @@ Employees are eligible for 2 days of remote work per week under the hybrid model
     docs = [
         {'filename': 'hr_policies_and_benefits.md', 'content': hr_content, 'department': 'hr'},
         {'filename': 'executive_strategy_report.md', 'content': clevel_content, 'department': 'c-level'},
-        {'filename': 'company_employee_handbook.md', 'content': employee_content, 'department': 'company_wide'}
+        {'filename': 'company_employee_handbook.md', 'content': employee_content, 'department': 'general'}
     ]
 
     for d in docs:
@@ -57,7 +57,7 @@ Employees are eligible for 2 days of remote work per week under the hybrid model
                 uploaded_by_user_id=admin_user['_id'],
                 department=d['department']
             )
-            process_document_for_rag(doc['id'], d['content'], d['filename'])
+            process_document_for_rag(doc['id'], d['content'], d['filename'], d['department'])
         except Exception as e:
             print(f"Error processing {d['filename']}: {e}")
             

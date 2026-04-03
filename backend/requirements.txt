@@ -9,3 +9,4 @@ dnspython
 fastembed>=0.2.0
 numpy>=1.21.0
 gunicorn==20.1.0
+google-generativeai

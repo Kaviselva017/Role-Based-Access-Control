@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 
 export const AuthContext = createContext();
 
-const API_BASE = "https://dragon-intel-api.onrender.com";
+const API_BASE = process.env.REACT_APP_API_URL || "https://role-based-access-control-q1et.onrender.com";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
