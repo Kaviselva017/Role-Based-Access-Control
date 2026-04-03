@@ -11,6 +11,21 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  // Test queries per role for verification
+  const roleTestQueries = {
+    "Admin": "Show all company technical system logs and security overview",
+    "C-Level": "Show full company performance KPIs across all departments",
+    "HR": "List all employee payroll and attendance records for March",
+    "Finance": "Generate the complete Profit and Loss statement for Q4",
+    "Marketing": "Show me the ROI and lead conversion rates for campaign alpha",
+    "Engineering": "Show the API architecture and system deployment history",
+    "Employee": "What are the company WFH and leave policies?"
+  };
+
+  const handleQuickTest = (roleName) => {
+    setInput(roleTestQueries[roleName]);
+  };
 
   useEffect(() => {
     if (location.state && location.state.newChat) {
@@ -125,14 +140,15 @@ const Chat = () => {
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <h1>CHAT INTERFACE</h1>
-        <div className="header-status">
-          <span className="status-dot online"></span>
-          <span>SYSTEM ONLINE</span>
-        </div>
-      </div>
+      <div className="chat-content-layout">
+        <div className="chat-container">
+          <div className="chat-header">
+            <h1>CHAT INTERFACE</h1>
+            <div className="header-status">
+              <span className="status-dot online"></span>
+              <span>SYSTEM ONLINE</span>
+            </div>
+          </div>
 
       <div className="chat-messages">
         {messages.length === 0 ? (
@@ -205,8 +221,34 @@ const Chat = () => {
         <button type="submit" disabled={loading} className="send-btn">
           {loading ? '⏳' : '📤'} SEND
         </button>
-      </form>
-    </div>
+          </form>
+        </div>
+
+        {user.role === 'Admin' && (
+          <div className="test-sidebar">
+            <div className="sidebar-header">
+              <h2>RBAC TEST DECK</h2>
+              <p>Verify role-specific boundaries</p>
+            </div>
+            <div className="test-buttons-grid">
+              {Object.keys(roleTestQueries).map((r) => (
+                <button 
+                  key={r} 
+                  className={`test-role-btn role-${r.toLowerCase()}`}
+                  onClick={() => handleQuickTest(r)}
+                  title={`Test ${r} boundary query`}
+                >
+                  <span className="btn-role-name">{r}</span>
+                  <span className="btn-action">RUN QUERY</span>
+                </button>
+              ))}
+            </div>
+            <div className="sidebar-footer">
+              <p>📍 Admin mode only</p>
+            </div>
+          </div>
+        )}
+      </div>
   );
 };
 

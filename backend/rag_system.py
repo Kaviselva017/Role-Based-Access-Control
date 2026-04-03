@@ -204,35 +204,63 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
         question=query
     )
 
-    # Use Ollama API if available, else fallback to hardcoded extraction
-    try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": OLLAMA_MODEL,
-                "prompt": prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.0,
-                    "top_k": 10,
-                    "top_p": 0.5
-                }
-            },
-            timeout=30
-        )
-        if response.status_code == 200:
-            full_response = response.json().get('response', '').strip()
-            return {
-                'response': full_response,
-                'source': ', '.join(source_files),
-                'confidence': float(relevant_docs[0]['similarity']),
-                'referenced_docs': source_files
+    # DUAL-ENGINE AI ROUTER (Zero Dependencies)
+    google_key = os.getenv('GOOGLE_API_KEY')
+    
+    if google_key:
+        # 🟢 STABLE URL PRODUCTION MODE (Gemini REST API)
+        try:
+            gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={google_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": 0.0, "topK": 10, "topP": 0.5}
             }
-        else:
-            print(f"Ollama returned {response.status_code} - {response.text}")
-    except requests.exceptions.RequestException as e:
-        print(f"Ollama backend unavailable or timed out: {e}")
-        # Fall through to the manual extraction below
+            response = requests.post(gemini_url, json=payload, timeout=30)
+            if response.status_code == 200:
+                data = response.json()
+                full_response = data['candidates'][0]['content']['parts'][0]['text'].strip()
+                return {
+                    'response': full_response,
+                    'source': ', '.join(source_files),
+                    'confidence': float(relevant_docs[0]['similarity']),
+                    'referenced_docs': source_files
+                }
+            else:
+                print(f"Gemini API Error: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Stable URL Cloud backend timed out: {e}")
+            
+    else:
+        # 🔵 OFFLINE LOCAL MODE (Ollama REST API)
+        try:
+            response = requests.post(
+                OLLAMA_URL,
+                json={
+                    "model": OLLAMA_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.0,
+                        "top_k": 10,
+                        "top_p": 0.5
+                    }
+                },
+                timeout=30
+            )
+            if response.status_code == 200:
+                full_response = response.json().get('response', '').strip()
+                return {
+                    'response': full_response,
+                    'source': ', '.join(source_files),
+                    'confidence': float(relevant_docs[0]['similarity']),
+                    'referenced_docs': source_files
+                }
+            else:
+                print(f"Ollama returned {response.status_code} - {response.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"Ollama backend unavailable or timed out: {e}")
+
+    # --- FALLBACK: Structured manual extraction ---
 
     # --- FALLBACK: Structured manual extraction ---
     response_lines = []

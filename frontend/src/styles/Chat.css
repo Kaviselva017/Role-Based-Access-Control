@@ -390,3 +390,107 @@
   .chat-input { padding: 12px 16px; }
   .send-btn { padding: 12px; width: 100%; min-height: 44px; }
 }
+
+/* ─── Role Testing Side Layout ─── */
+.chat-content-layout {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+  overflow: hidden;
+  height: calc(100vh - 100px);
+}
+
+.test-sidebar {
+  width: 280px;
+  background: rgba(10, 18, 40, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  animation: fadeInRight 0.5s ease-out;
+}
+
+.sidebar-header h2 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--cyber-cyan);
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.sidebar-header p {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cyber-text-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.test-buttons-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.test-role-btn {
+  background: rgba(5, 10, 24, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  border-left: 3px solid transparent;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.test-role-btn:hover {
+  background: rgba(0, 255, 255, 0.05);
+  transform: translateX(4px);
+}
+
+.btn-role-name {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.btn-action {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--cyber-text-muted);
+}
+
+/* Role Border Colors */
+.role-admin { border-left-color: var(--cyber-red); color: var(--cyber-red); }
+.role-c-level { border-left-color: #ffd700; color: #ffd700; } /* gold */
+.role-hr { border-left-color: #ff00ff; color: #ff00ff; } /* magenta */
+.role-finance { border-left-color: var(--cyber-green); color: var(--cyber-green); }
+.role-marketing { border-left-color: #ff9900; color: #ff9900; } /* orange */
+.role-engineering { border-left-color: var(--cyber-cyan); color: var(--cyber-cyan); }
+.role-employee { border-left-color: #999; color: #999; }
+
+.sidebar-footer {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(0, 255, 255, 0.05);
+}
+
+.sidebar-footer p {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--cyber-text-muted);
+  text-align: center;
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
