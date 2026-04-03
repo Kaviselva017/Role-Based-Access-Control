@@ -100,12 +100,14 @@ def diagnostics():
         diag["checks"]["embedding_model"] = {"status": "OK", "dim": len(test_embed[0])}
     except Exception as e:
         diag["checks"]["embedding_model"] = {"status": "FAIL", "error": str(e)}
-    # Check 4: Gemini API
+    # Check 4: Ollama API
     try:
-        api_key = os.getenv('GOOGLE_API_KEY', '')
-        diag["checks"]["gemini_api"] = {"status": "OK" if api_key else "MISSING", "key_present": bool(api_key)}
+        import requests
+        ollama_url = os.getenv('OLLAMA_URL', 'http://localhost:11434/api/tags')
+        resp = requests.get(ollama_url, timeout=2)
+        diag["checks"]["ollama_api"] = {"status": "OK" if resp.status_code == 200 else "FAIL"}
     except Exception as e:
-        diag["checks"]["gemini_api"] = {"status": "FAIL", "error": str(e)}
+        diag["checks"]["ollama_api"] = {"status": "FAIL", "error": str(e)}
     return jsonify(diag), 200
 
 # Middleware

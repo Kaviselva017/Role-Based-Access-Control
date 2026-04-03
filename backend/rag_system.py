@@ -156,19 +156,15 @@ def search_relevant_documents(query, department=None, limit=3):
         import gc
         gc.collect() # Immediate memory reclaim after search
 
-import google.generativeai as genai
+import requests
 
-# Setup Gemini model
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-# Try-except for Gemini model initialization to handle missing keys gracefully in dev
-try:
-    model = genai.GenerativeModel('gemini-flash-latest')
-except Exception:
-    model = None
+# Default to llama3 for Ollama
+OLLAMA_URL = os.getenv('OLLAMA_URL', 'http://localhost:11434/api/generate')
+OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'llama3.2')
 
 def generate_rag_response(query, user_role, department, retrieved_docs):
     """
-    Generate an intelligent summarized response based on retrieved context using Google Gemini.
+    Generate an intelligent summarized response based on retrieved context using Ollama locally.
     Strictly adheres to RBAC rules and provides structured output.
     """
     
@@ -208,29 +204,30 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
         question=query
     )
 
-    # Use Gemini if available, else fallback to hardcoded extraction
-    if model and os.getenv('GOOGLE_API_KEY'):
-        try:
-            # 25-second internal timeout (prevents Render 30s timeout kills)
-            response_gen = model.generate_content(
-                prompt,
-                request_options={"timeout": 25}
-            )
-            # Gemini response usually follows the template instructions well
-            full_response = response_gen.text.strip()
-            
+    # Use Ollama API if available, else fallback to hardcoded extraction
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False
+            },
+            timeout=30
+        )
+        if response.status_code == 200:
+            full_response = response.json().get('response', '').strip()
             return {
                 'response': full_response,
                 'source': ', '.join(source_files),
                 'confidence': float(relevant_docs[0]['similarity']),
                 'referenced_docs': source_files
             }
-        except Exception as e:
-            gemini_error = f"ERROR: {str(e)}"
-            print(f"Gemini synthesis logic timed out or failed: {e}")
-            # Fall through to the manual extraction below
-    else:
-        gemini_error = "ERROR: Model None or Missing API Key"
+        else:
+            print(f"Ollama returned {response.status_code} - {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Ollama backend unavailable or timed out: {e}")
+        # Fall through to the manual extraction below
 
     # --- FALLBACK: Structured manual extraction ---
     response_lines = []
