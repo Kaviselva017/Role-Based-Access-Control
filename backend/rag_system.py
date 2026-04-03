@@ -310,7 +310,17 @@ def get_role_based_response(query, user_role):
     try:
         from prompt_templates import RBAC_PERMISSION_MATRIX
     except ImportError:
-        from .prompt_templates import RBAC_PERMISSION_MATRIX
+        try:
+            from .prompt_templates import RBAC_PERMISSION_MATRIX
+        except Exception:
+            # EMERGENCY FALLBACK - Ensure the bot NEVER crashes with a NameError
+            RBAC_PERMISSION_MATRIX = {
+                'Admin': {'silos': ['hr', 'finance', 'engineering', 'onboarding']},
+                'Hr': {'silos': ['hr', 'onboarding']},
+                'Finance': {'silos': ['finance']},
+                'Engineering': {'silos': ['engineering']},
+                'Employee': {'silos': ['onboarding']}
+            }
     
     # Normalize role for lookup
     role_key = user_role.capitalize() if user_role else 'Employee'
