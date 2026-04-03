@@ -21,16 +21,19 @@ chat_history_collection = db['chat_history']
 queries_collection = db['queries']
 doc_chunks_collection = db['doc_chunks']
 
-# Create indexes
-users_collection.create_index('username', unique=True)
-users_collection.create_index('email', unique=True)
-access_keys_collection.create_index('key', unique=True)
-access_keys_collection.create_index('user_id')
-documents_collection.create_index('user_id')
-chat_history_collection.create_index('user_id')
-queries_collection.create_index('user_id')
-doc_chunks_collection.create_index('doc_id')
-doc_chunks_collection.create_index('department')
+# Create indexes cautiously
+try:
+    users_collection.create_index('username', unique=True)
+    users_collection.create_index('email', unique=True)
+    access_keys_collection.create_index('key', unique=True)
+    access_keys_collection.create_index('user_id')
+    documents_collection.create_index('user_id')
+    chat_history_collection.create_index('user_id')
+    queries_collection.create_index('user_id')
+    doc_chunks_collection.create_index('doc_id')
+    doc_chunks_collection.create_index('department')
+except Exception as e:
+    print(f"Index creation delayed: {str(e)}")
 
 
 class Role:
