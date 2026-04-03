@@ -325,12 +325,12 @@ def get_role_based_response(query, user_role):
     
     # Department keywords to block for roles that don't have access
     all_dept_keywords = {
-        'finance': ['expense', 'revenue', 'budget', 'p&l', 'tax', 'invoice', 'profit', 'cost', 'financial'],
-        'hr': ['employee', 'payroll', 'attendance', 'hiring', 'turnover', 'benefits', 'salary'],
-        'marketing': ['campaign', 'analytics', 'leads', 'brand', 'social media', 'conversion', 'roi'],
-        'engineering': ['api', 'architecture', 'deployment', 'server', 'endpoint', 'uptime'],
-        'admin': ['audit log', 'system config', 'security', 'user management'],
-        'c-level': ['strategic', 'executive', 'board', 'kpi']
+        'finance': ['expense', 'revenue', 'budget', 'p&l', 'tax', 'invoice', 'profit', 'cost', 'financial', 'finance', 'salary', 'payroll'],
+        'hr': ['employee', 'hr', 'human resources', 'leave', 'attendance', 'hiring', 'turnover', 'benefits', 'recruitment', 'onboarding'],
+        'marketing': ['campaign', 'analytics', 'leads', 'brand', 'social media', 'conversion', 'roi', 'marketing', 'ads', 'sales'],
+        'engineering': ['api', 'architecture', 'deployment', 'server', 'endpoint', 'uptime', 'engineering', 'backend', 'frontend', 'database'],
+        'admin': ['audit log', 'system config', 'user management', 'administrator', 'settings'],
+        'c-level': ['strategic', 'executive', 'executive board', 'kpi', 'c-level', 'vision']
     }
     
     # Build list of blocked keywords: any department NOT in the user's accessible list
@@ -339,18 +339,17 @@ def get_role_based_response(query, user_role):
         if dept not in accessible_depts and dept != 'general':
             blocked_keywords.extend(keywords)
     
-    access_denied = False
+    import re
     for keyword in blocked_keywords:
-        if keyword in query_lower:
-            access_denied = True
-            break
-    
-    if access_denied:
-        return {
-            'response': "⛔ Access Denied: You do not have permission to view this information.",
-            'access_denied': True,
-            'role_info': {'title': role_config['description']}
-        }
+        # Use regex to match only whole words (or specific boundaries)
+        # to avoid false positives like "onboarding" containing "board"
+        pattern = rf'\b{re.escape(keyword)}\b'
+        if re.search(pattern, query_lower):
+            return {
+                'response': f"⛔ Access Denied: Your role ({user_role}) does not have permission to access {keyword}-related data.",
+                'access_denied': True,
+                'role_info': {'title': role_config['description']}
+            }
     
     return {
         'response': "ℹ️ No relevant data found in your access scope for this query.",

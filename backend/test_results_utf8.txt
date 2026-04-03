@@ -1,0 +1,89 @@
+﻿python : D:\python\company
+-chatbot-rbac\backend\rag_
+system.py:156: 
+FutureWarning: 
+At line:1 char:13
++ cd backend; python 
+test_rbac_strict.py > 
+test_results.txt 2>&1
++             ~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (D  
+  :\python\compa...Futu   
+ reWarning: :String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+All support for the 
+`google.generativeai` 
+package has ended. It 
+will no longer be 
+receiving 
+updates or bug fixes. 
+Please switch to the 
+`google.genai` package as 
+soon as possible.
+See README for more 
+details:
+
+https://github.com/google-
+gemini/deprecated-generati
+ve-ai-python/blob/main/REA
+DME.md
+
+  import 
+google.generativeai as 
+genai
+Testing Role: ADMIN
+  [OK] Allowed: Give a complete company performance summary
+  [OK] Allowed: Show financial, HR, and marketing reports together
+  [OK] Allowed: What are current engineering and product updates?
+  [OK] Allowed: Provide overall company growth analysis
+  [OK] Allowed: Show risks across all departments
+Testing Role: FINANCE
+  [OK] Allowed: What is the latest financial report?
+  [ERROR] Should be allowed but denied: Show quarterly revenue and expenses
+  [OK] Allowed: What is the company budget allocation?
+  [OK] Allowed: Give profit and loss summary
+  [OK] Allowed: What are financial projections?
+  [OK] Denied: What is HR leave policy?
+  [OK] Denied: Show marketing campaign strategy
+Testing Role: HR
+  [OK] Allowed: What is the employee leave policy?
+  [OK] Allowed: Explain employee benefits
+  [OK] Allowed: What is the recruitment process?
+  [ERROR] Should be allowed but denied: Show onboarding procedure
+  [OK] Allowed: What are company HR rules?
+  [OK] Denied: Show financial report
+  [OK] Denied: What is marketing campaign performance?
+Testing Role: MARKETING
+  [OK] Allowed: What are current marketing campaigns?
+  [OK] Allowed: Show campaign performance metrics
+  [OK] Allowed: What is customer acquisition strategy?
+  [OK] Allowed: Give marketing analytics report
+  [OK] Allowed: What channels are used for promotion?
+  [OK] Denied: Show HR policies
+  [OK] Denied: What is financial budget report?
+Testing Role: ENGINEERING
+  [OK] Allowed: What are current engineering projects?
+  [OK] Allowed: Explain system architecture
+  [OK] Allowed: What technologies are used in backend?
+  [OK] Allowed: Describe deployment pipeline
+  [OK] Allowed: Show product development roadmap
+  [OK] Denied: What is financial revenue?
+  [OK] Denied: Show HR policies
+Testing Role: EMPLOYEE
+  [OK] Allowed: What is company handbook?
+  [OK] Allowed: What are general company policies?
+  [OK] Allowed: Explain company rules
+  [OK] Allowed: What is code of conduct?
+  [OK] Allowed: What are working hours?
+  [OK] Denied: Financial report
+  [OK] Denied: HR detailed policies
+  [OK] Denied: Engineering details
+  [OK] Denied: Marketing strategy
