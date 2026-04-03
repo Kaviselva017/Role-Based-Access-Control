@@ -83,18 +83,27 @@ const Chat = () => {
         };
         setMessages((prev) => [...prev, botMessage]);
       } else {
-        const error = await response.json();
+        // Try to get JSON error, if not, use status text
+        let errorMsg = 'Failed to get a response from the Dragon Intelligence terminal.';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch (e) {
+          errorMsg = `Server error code: ${response.status} (${response.statusText})`;
+        }
+        
         setMessages((prev) => [...prev, {
           role: 'bot',
-          content: `Error: ${error.message}`,
+          content: `⚠️ CONNECT REJECTED: ${errorMsg}`,
           timestamp: new Date().toISOString(),
           isError: true
         }]);
       }
     } catch (err) {
+      console.error('Fetch error:', err);
       setMessages((prev) => [...prev, {
         role: 'bot',
-        content: 'Failed to send message. Please try again.',
+        content: `📡 SIGNAL LOST: Terminal timed out or server is resetting. Please wait 10s and retry. (${err.message})`,
         timestamp: new Date().toISOString(),
         isError: true
       }]);
