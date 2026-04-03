@@ -7,7 +7,7 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 32px);
+  flex: 1;
   margin: 16px;
   background: rgba(5, 10, 24, 0.85);
   border: 1px solid rgba(0, 255, 255, 0.08);

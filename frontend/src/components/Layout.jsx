@@ -6,15 +6,26 @@ import '../styles/Layout.css';
 const Layout = ({ children }) => {
   const { user, logout, hasPermission } = useContext(AuthContext);
   const location = useLocation();
+  const [isSidebarOpen, setSidebarOpen] = React.useState(false);
 
   if (!user) return children;
 
   const isActive = (path) => location.pathname === path;
+  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   return (
-    <div className="layout-container">
+    <div className={`layout-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      {/* Mobile Top Bar */}
+      <header className="mobile-header">
+        <button className="hamburger-btn" onClick={toggleSidebar}>
+          {isSidebarOpen ? '✕' : '☰'}
+        </button>
+        <div className="mobile-logo">DRAGON</div>
+        <div className="user-icon-mobile">{user.username.charAt(0).toUpperCase()}</div>
+      </header>
+
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? 'active' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <span className="logo-hex">⬡</span>

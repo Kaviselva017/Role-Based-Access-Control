@@ -209,8 +209,11 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
     # Use Gemini if available, else fallback to hardcoded extraction
     if model and os.getenv('GOOGLE_API_KEY'):
         try:
-            # Generate synthesized response
-            response_gen = model.generate_content(prompt)
+            # 25-second internal timeout (prevents Render 30s timeout kills)
+            response_gen = model.generate_content(
+                prompt,
+                request_options={"timeout": 25}
+            )
             # Gemini response usually follows the template instructions well
             full_response = response_gen.text.strip()
             
@@ -221,8 +224,8 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
                 'referenced_docs': source_files
             }
         except Exception as e:
-            print(f"Gemini generation error: {e}")
-            # Continue to fallback below
+            print(f"Gemini synthesis logic timed out or failed: {e}")
+            # Fall through to the manual extraction below
 
     # --- FALLBACK: Structured manual extraction ---
     response_lines = []

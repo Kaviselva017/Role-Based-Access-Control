@@ -373,53 +373,90 @@
 }
 
 /* ─── Responsive ─── */
+.mobile-header {
+  display: none;
+  background: rgba(5, 10, 24, 0.98);
+  border-bottom: 2px solid rgba(0, 255, 255, 0.15);
+  padding: 14px 20px;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  position: relative;
+}
+
+.hamburger-btn {
+  background: none;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: var(--cyber-cyan);
+  font-size: 20px;
+  width: 40px; height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+}
+
+.mobile-logo {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 4px;
+  color: var(--cyber-cyan);
+  font-weight: 800;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+.user-icon-mobile {
+  width: 32px; height: 32px;
+  background: rgba(0, 255, 255, 0.1);
+  border: 1px solid var(--cyber-cyan);
+  color: var(--cyber-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 12px;
+}
+
 @media (max-width: 768px) {
   .layout-container {
     flex-direction: column;
   }
 
+  .mobile-header {
+    display: flex;
+  }
+
   .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid rgba(0, 255, 255, 0.08);
-    padding: 12px;
+    position: fixed;
+    top: 68px; /* High enough to allow header */
+    left: -280px; /* Entirely off-screen */
+    bottom: 0;
+    width: 260px;
+    height: calc(100vh - 68px);
+    transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background: rgba(5, 10, 24, 0.98);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8);
     animation: none;
+    z-index: 200;
   }
 
-  .sidebar-header {
-    margin-bottom: 12px;
+  .sidebar.active {
+    left: 0;
   }
 
-  .user-info {
-    margin-bottom: 12px;
-    padding: 10px;
+  .main-content {
+    height: calc(100vh - 68px);
+    overflow-y: auto;
   }
 
   .navigation {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 6px;
-    padding-bottom: 8px;
+    flex-direction: column; /* Vertical back to normal in menu */
   }
 
   .nav-section-label {
-    display: none;
-  }
-
-  .nav-item {
-    white-space: nowrap;
-    flex: 0 0 auto;
-    padding: 8px 12px;
-    transform: none !important;
-  }
-
-  .nav-item.active .nav-indicator {
-    top: auto; bottom: 0;
-    left: 20%; right: 20%;
-    height: 2px; width: auto;
-  }
-
-  .sidebar-footer .system-info-bar {
-    display: none;
+    display: block; /* Show labels in mobile list */
   }
 }
