@@ -9,8 +9,8 @@ import os
 # MongoDB Connection
 # Support both MONGO_URI (often from Atlas) and MONGODB_URL (from your env example)
 MONGODB_URL = os.getenv('MONGO_URI') or os.getenv('MONGODB_URL') or 'mongodb://localhost:27017'
-client = MongoClient(MONGODB_URL)
-db = client['company_chatbot_rbac']
+client = MongoClient(MONGODB_URL, serverSelectionTimeoutMS=5000)
+db = client.get_database('company_chatbot_rbac')
 
 # Collections
 users_collection = db['users']
