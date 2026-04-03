@@ -7,9 +7,11 @@ import os
 try:
     from .models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
     from .rag_system import search_relevant_documents, generate_rag_response, get_role_based_response, process_document_for_rag
+    from .prompt_templates import RBAC_PERMISSION_MATRIX
 except ImportError:
     from models import User, AccessKey, Document, ChatHistory, QueryMetrics, Role, users_collection
     from rag_system import search_relevant_documents, generate_rag_response, get_role_based_response, process_document_for_rag
+    from prompt_templates import RBAC_PERMISSION_MATRIX
 import gc
 import traceback
 
@@ -50,19 +52,61 @@ def after_request(response):
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
 JWT_EXPIRATION = 24  # hours
 
+# Build version for deployment tracking
+BUILD_VERSION = "1.0.5-RBAC_MATRIX_FIX"
+
 # Health Check / Root Index
 @app.route('/')
 def home():
     return jsonify({
         "status": "ONLINE",
         "platform": "Dragon Intelligence Platform",
-        "version": "1.0.0",
+        "version": BUILD_VERSION,
+        "build_note": "RBAC_PERMISSION_MATRIX import fix applied",
         "endpoints": {
             "auth": "/api/auth/login",
             "chat": "/api/chat",
-            "stats": "/api/dashboard/stats"
+            "stats": "/api/dashboard/stats",
+            "health": "/api/health",
+            "diagnostics": "/api/diagnostics"
         }
     }), 200
+
+@app.route('/api/diagnostics', methods=['GET'])
+def diagnostics():
+    """Full diagnostics endpoint for deployment verification"""
+    diag = {
+        "build_version": BUILD_VERSION,
+        "status": "OPERATIONAL",
+        "checks": {}
+    }
+    # Check 1: RBAC_PERMISSION_MATRIX loaded
+    try:
+        roles_loaded = list(RBAC_PERMISSION_MATRIX.keys())
+        diag["checks"]["rbac_matrix"] = {"status": "OK", "roles": roles_loaded}
+    except Exception as e:
+        diag["checks"]["rbac_matrix"] = {"status": "FAIL", "error": str(e)}
+    # Check 2: MongoDB connection
+    try:
+        from models import users_collection
+        user_count = users_collection.count_documents({})
+        diag["checks"]["mongodb"] = {"status": "OK", "users": user_count}
+    except Exception as e:
+        diag["checks"]["mongodb"] = {"status": "FAIL", "error": str(e)}
+    # Check 3: Embedding model
+    try:
+        from rag_system import embedding_model
+        test_embed = list(embedding_model.embed(["test"]))
+        diag["checks"]["embedding_model"] = {"status": "OK", "dim": len(test_embed[0])}
+    except Exception as e:
+        diag["checks"]["embedding_model"] = {"status": "FAIL", "error": str(e)}
+    # Check 4: Gemini API
+    try:
+        api_key = os.getenv('GOOGLE_API_KEY', '')
+        diag["checks"]["gemini_api"] = {"status": "OK" if api_key else "MISSING", "key_present": bool(api_key)}
+    except Exception as e:
+        diag["checks"]["gemini_api"] = {"status": "FAIL", "error": str(e)}
+    return jsonify(diag), 200
 
 # Middleware
 def token_required(f):
