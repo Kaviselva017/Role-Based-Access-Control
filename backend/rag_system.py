@@ -199,9 +199,8 @@ def generate_rag_response(query, user_role, department, retrieved_docs):
         if doc['filename'] not in source_files:
             source_files.append(doc['filename'])
 
-    # Get the FINAL_PRODUCTION_PROMPT (ensure it's clean for synthesis)
-    from prompt_templates import FINAL_PRODUCTION_PROMPT
-    
+    # Use the globally imported FINAL_PRODUCTION_PROMPT
+
     prompt = FINAL_PRODUCTION_PROMPT.format(
         role=user_role,
         department=department,
@@ -307,20 +306,7 @@ def get_role_based_response(query, user_role):
     Generate role-based responses with access control.
     Uses the RBAC_PERMISSION_MATRIX from prompt_templates for consistency.
     """
-    try:
-        from prompt_templates import RBAC_PERMISSION_MATRIX
-    except ImportError:
-        try:
-            from .prompt_templates import RBAC_PERMISSION_MATRIX
-        except Exception:
-            # EMERGENCY FALLBACK - Ensure the bot NEVER crashes with a NameError
-            RBAC_PERMISSION_MATRIX = {
-                'Admin': {'silos': ['hr', 'finance', 'engineering', 'onboarding']},
-                'Hr': {'silos': ['hr', 'onboarding']},
-                'Finance': {'silos': ['finance']},
-                'Engineering': {'silos': ['engineering']},
-                'Employee': {'silos': ['onboarding']}
-            }
+    # Uses the globally imported RBAC_PERMISSION_MATRIX from prompt_templates
     
     # Normalize role for lookup
     role_key = user_role.capitalize() if user_role else 'Employee'
