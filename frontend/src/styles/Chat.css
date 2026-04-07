@@ -381,7 +381,24 @@
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
-  .chat-container { margin: 8px; height: calc(100vh - 16px); }
+  .chat-content-layout {
+    flex-direction: column;
+    overflow-y: auto;
+    height: auto;
+  }
+  
+  .test-sidebar {
+    width: auto;
+    margin: 8px;
+    height: 300px; /* shorter on mobile */
+  }
+
+  .chat-container { 
+    margin: 8px; 
+    flex: none;
+    height: calc(100dvh - 100px); /* Fill the screen minus header and some buffer */
+    min-height: 500px;
+  }
   .chat-header { padding: 14px 16px; }
   .chat-header h1 { font-size: 13px; letter-spacing: 2px; }
   .chat-messages { padding: 16px; gap: 12px; }
@@ -397,7 +414,7 @@
   flex: 1;
   gap: 16px;
   overflow: hidden;
-  height: calc(100vh - 100px);
+  height: 100%;
 }
 
 .test-sidebar {

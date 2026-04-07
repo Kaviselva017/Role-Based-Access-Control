@@ -427,20 +427,23 @@
 
   .mobile-header {
     display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 300;
   }
 
   .sidebar {
     position: fixed;
-    top: 68px; /* High enough to allow header */
-    left: -280px; /* Entirely off-screen */
+    top: 0;
+    left: -280px;
     bottom: 0;
     width: 260px;
-    height: calc(100vh - 68px);
+    height: 100vh;
     transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     background: rgba(5, 10, 24, 0.98);
     box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8);
     animation: none;
-    z-index: 200;
+    z-index: 400;
   }
 
   .sidebar.active {
@@ -448,7 +451,8 @@
   }
 
   .main-content {
-    height: calc(100vh - 68px);
+    flex: 1;
+    height: auto; /* Let flex-column handle it */
     overflow-y: auto;
   }
 

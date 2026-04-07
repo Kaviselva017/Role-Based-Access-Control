@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }) => {
 
   const validateToken = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/health`, {
+      // Changed from /api/health to /api/access-keys to test a protected route
+      const response = await fetch(`${API_BASE}/api/access-keys`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!response.ok) {

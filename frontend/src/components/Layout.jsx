@@ -13,6 +13,11 @@ const Layout = ({ children }) => {
   const isActive = (path) => location.pathname === path;
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
+  // Close sidebar when clicking a link on mobile (including new sessions)
+  React.useEffect(() => {
+    setSidebarOpen(false);
+  }, [location]);
+
   return (
     <div className={`layout-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
       {/* Mobile Top Bar */}
