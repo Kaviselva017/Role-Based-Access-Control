@@ -42,17 +42,11 @@ def handle_exception(e):
         "trace": err_trace.split('\n')[-2] # Show the most recent line of death
     }), 500
 
-@app.after_request
-def after_request(response):
-    # Support multiple origins including the user's specific vercel domain
-    origin = request.headers.get('Origin')
-    if origin:
-        response.headers['Access-Control-Allow-Origin'] = origin
-    else:
-        response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    return response
+# @app.after_request
+# def after_request(response):
+#     # Flask-CORS already handles this; doing this manually causes duplicate headers
+#     # which makes Chrome block the request with a 'Failed to fetch' CORS error.
+#     return response
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
